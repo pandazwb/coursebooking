@@ -1,0 +1,31 @@
+{
+  "name": "typescript-express-app",
+  "version": "1.0.0",
+  "description": "A simple TypeScript Express application",
+  "main": "dist/app.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/app.js",
+    "dev": "ts-node src/app.ts",
+    "pm2": "npm run build && pm2 start ./ecosystem.config.js"
+  },
+  "dependencies": {
+    "@types/node-schedule": "^2.1.7",
+    "express": "^4.17.1",
+    "node-schedule": "^2.1.1",
+    "schedule": "^0.5.0",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.13",
+    "@types/node": "^16.11.7",
+    "@types/schedule": "^0.5.3",
+    "ts-node": "^10.4.0",
+    "typescript": "^4.5.4"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "license": "MIT"
+}
