@@ -11,6 +11,7 @@ schedule.scheduleJob('*/5 * * * * * * * *', () => {
 const getRowClassList = async () => {
     try {
 
+        //StoresID会变
         const body = {
             "StoresID": "1517",
             "isweek": "0",
@@ -224,7 +225,6 @@ const modifyPrice = async (body: any, curPrice = '500') => {
         "ListRowClassTime": "[]",
         "RowClassID": "2782943",
         token
-
     }
     console.log('newBody', newBody);
 
