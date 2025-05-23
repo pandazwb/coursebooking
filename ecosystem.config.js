@@ -12,7 +12,11 @@ module.exports = {
             'node_modules',
             'logs',
             'src/config/token.json',  // 忽略 token.json 的变化
-            'dist/config/token.json'  // 忽略编译后的 token.json 的变化
+            'dist/config/token.json',  // 忽略编译后的 token.json 的变化
+            'dist/logs',           // 忽略编译后的日志目录
+            'dist/logs/*',         // 忽略编译后的所有日志文件
+            'src/logs',            // 忽略源代码的日志目录
+            'src/logs/*'           // 忽略源代码的所有日志文件
         ],
         max_memory_restart: '1G',
         output: './logs/prod-access.log',

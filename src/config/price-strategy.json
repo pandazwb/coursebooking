@@ -5,12 +5,12 @@
             { "amount": 1, "price": 150 },
             { "amount": 2, "price": 150 },
             { "amount": 3, "price": 150 },
-            { "amount": 4, "price": 145 },
-            { "amount": 5, "price": 140 },
-            { "amount": 6, "price": 135 },
-            { "amount": 7, "price": 130 },
-            { "amount": 8, "price": 125 },
-            { "amount": 9, "price": 120 }
+            { "amount": 4, "price": 140 },
+            { "amount": 5, "price": 134 },
+            { "amount": 6, "price": 130 },
+            { "amount": 7, "price": 120 },
+            { "amount": 8, "price": 114},
+            { "amount": 9, "price": 110 }
 
         ],
         "90": [
@@ -18,24 +18,24 @@
             { "amount": 1, "price": 225 },
             { "amount": 2, "price": 225 },
             { "amount": 3, "price": 225 },
-            { "amount": 4, "price": 220 },
-            { "amount": 5, "price": 215 },
-            { "amount": 6, "price": 210 },
-            { "amount": 7, "price": 205 },
-            { "amount": 8, "price": 200 },
-            { "amount": 9, "price": 195 }
+            { "amount": 4, "price": 210 },
+            { "amount": 5, "price": 201 },
+            { "amount": 6, "price": 195 },
+            { "amount": 7, "price": 180 },
+            { "amount": 8, "price": 171 },
+            { "amount": 9, "price": 165 }
         ],
         "120": [
             { "amount": 0, "price": 300 },
             { "amount": 1, "price": 300 },
             { "amount": 2, "price": 300 },
             { "amount": 3, "price": 300 },
-            { "amount": 4, "price": 290 },
-            { "amount": 5, "price": 280 },
-            { "amount": 6, "price": 270 },
-            { "amount": 7, "price": 260 },
-            { "amount": 8, "price": 250 },
-            { "amount": 9, "price": 240 }
+            { "amount": 4, "price": 280 },
+            { "amount": 5, "price": 268 },
+            { "amount": 6, "price": 260 },
+            { "amount": 7, "price": 240 },
+            { "amount": 8, "price": 228 },
+            { "amount": 9, "price": 220 }
         ]
     }
 } 
