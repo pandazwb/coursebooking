@@ -1,17 +1,50 @@
 import schedule from 'node-schedule';
 import { formatToLocalTime, getDb } from './db';
+import * as fs from 'fs';
+import * as path from 'path';
 
-const token = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJaSFlLIiwiZXhwIjoxNzQ3ODExNjc3LCJzdWIiOiJKV1QiLCJhdWQiOiIxNDkwOSIsImlhdCI6IjIwMjUvNS8yMCAxNToxNDozNyIsImRhdGEiOnsiTmFtZSI6IumSn-WFiOeUnyIsIklzZGlzYWJsZSI6MCwiUm9sZSI6IjAiLCJMaW1pdHMiOiIxLDIsMywzMSwzMiw0LDQxLDQyLDQzLDQ0LDUsNTEsNTIsNTMsNiw2MSw2Miw2Myw2NCw2NSw2Niw2Nyw2OCw2OSw2MDEsNjAyLDYwMyw3LDcxLDcyLDczLDc0LDc1LDgsODEsOSw5MSw5Miw5Myw5NCwxMCwxMDEsMTAyLDEwMywxMDQsMTEsMTExLDExMiwxMTMsMTE0LDExNSwyMSwyMiwyMywyNCwyNSwyNiwyNywxMDUsMjgsMTIsMTIxLDEyMiwxMjMsMTMsMTQsMTQxLDE0MiwxNSw2MDQsMzMsNjA1LDYwNiw2MDcsNjA4LDYwOSw2MTAsNjExLDYxMiw2MTMsNjE0LDYxNSw2MTYsNjE3LDYxOCw2MTksNjIwLDYyMSw2MDQxLDYwNDIsNjA0Myw2MDQ0LDYwNDUsMjksMjExLDIxMiwyMTMsMjE0LDE2LDE2MSwxNjIsMTYzLDE2NiwxNjcsMTY0LDYwNDYsNjA0Nyw2MDQ4LDYwNDksMjE1LDIxNiwxNjUsMjE3LDc4LDYwNTAsMjE4LDIxOSwyMTkwLDIxOTEsMjE5MiIsInVzZXJpZCI6IjE0OTA5IiwiU3RvcmVzSUQiOiIxNTE3IiwiSXNIZWFkT2ZmaWNlIjowLCJJc3RlciI6MX19.iQqqq5dBq2loy0QfgGKJXi_Rr4QgisQsUOdS0TdisZA'
-// 定义一个定时任务，每分钟执行一次
-schedule.scheduleJob('*/5 * * * * * * * *', () => {
+//{"StoresID":"1517","token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJaSFlLIiwiZXhwIjoxNzQ4MTA2Mjg2LCJzdWIiOiJKV1QiLCJhdWQiOiIxNDkwOSIsImlhdCI6IjIwMjUvNS8yNCAxOjA0OjQ2IiwiZGF0YSI6eyJOYW1lIjoi6ZKf5YWI55SfIiwiSXNkaXNhYmxlIjowLCJSb2xlIjoiMCIsIkxpbWl0cyI6IjEsMiwzLDMxLDMyLDQsNDEsNDIsNDMsNDQsNSw1MSw1Miw1Myw2LDYxLDYyLDYzLDY0LDY1LDY2LDY3LDY4LDY5LDYwMSw2MDIsNjAzLDcsNzEsNzIsNzMsNzQsNzUsOCw4MSw5LDkxLDkyLDkzLDk0LDEwLDEwMSwxMDIsMTAzLDEwNCwxMSwxMTEsMTEyLDExMywxMTQsMTE1LDIxLDIyLDIzLDI0LDI1LDI2LDI3LDEwNSwyOCwxMiwxMjEsMTIyLDEyMywxMywxNCwxNDEsMTQyLDE1LDYwNCwzMyw2MDUsNjA2LDYwNyw2MDgsNjA5LDYxMCw2MTEsNjEyLDYxMyw2MTQsNjE1LDYxNiw2MTcsNjE4LDYxOSw2MjAsNjIxLDYwNDEsNjA0Miw2MDQzLDYwNDQsNjA0NSwyOSwyMTEsMjEyLDIxMywyMTQsMTYsMTYxLDE2MiwxNjMsMTY2LDE2NywxNjQsNjA0Niw2MDQ3LDYwNDgsNjA0OSwyMTUsMjE2LDE2NSwyMTcsNzgsNjA1MCwyMTgsMjE5LDIxOTAsMjE5MSwyMTkyIiwidXNlcmlkIjoiMTQ5MDkiLCJTdG9yZXNJRCI6IjE1MTciLCJJc0hlYWRPZmZpY2UiOjAsIklzdGVyIjoxfX0.8Ivp-H04N_w0KdUBgHvmpX0hZO6ZZuxMRfkNLDBK4LA"}: 
+const token = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJaSFlLIiwiZXhwIjoxNzQ4MTA2Mjg2LCJzdWIiOiJKV1QiLCJhdWQiOiIxNDkwOSIsImlhdCI6IjIwMjUvNS8yNCAxOjA0OjQ2IiwiZGF0YSI6eyJOYW1lIjoi6ZKf5YWI55SfIiwiSXNkaXNhYmxlIjowLCJSb2xlIjoiMCIsIkxpbWl0cyI6IjEsMiwzLDMxLDMyLDQsNDEsNDIsNDMsNDQsNSw1MSw1Miw1Myw2LDYxLDYyLDYzLDY0LDY1LDY2LDY3LDY4LDY5LDYwMSw2MDIsNjAzLDcsNzEsNzIsNzMsNzQsNzUsOCw4MSw5LDkxLDkyLDkzLDk0LDEwLDEwMSwxMDIsMTAzLDEwNCwxMSwxMTEsMTEyLDExMywxMTQsMTE1LDIxLDIyLDIzLDI0LDI1LDI2LDI3LDEwNSwyOCwxMiwxMjEsMTIyLDEyMywxMywxNCwxNDEsMTQyLDE1LDYwNCwzMyw2MDUsNjA2LDYwNyw2MDgsNjA5LDYxMCw2MTEsNjEyLDYxMyw2MTQsNjE1LDYxNiw2MTcsNjE4LDYxOSw2MjAsNjIxLDYwNDEsNjA0Miw2MDQzLDYwNDQsNjA0NSwyOSwyMTEsMjEyLDIxMywyMTQsMTYsMTYxLDE2MiwxNjMsMTY2LDE2NywxNjQsNjA0Niw2MDQ3LDYwNDgsNjA0OSwyMTUsMjE2LDE2NSwyMTcsNzgsNjA1MCwyMTgsMjE5LDIxOTAsMjE5MSwyMTkyIiwidXNlcmlkIjoiMTQ5MDkiLCJTdG9yZXNJRCI6IjE1MTciLCJJc0hlYWRPZmZpY2UiOjAsIklzdGVyIjoxfX0.8Ivp-H04N_w0KdUBgHvmpX0hZO6ZZuxMRfkNLDBK4LA'
+
+// Add at the top of the file
+interface PriceStrategy {
+    amount: number;
+    price: number;
+    conditions?: {
+        courseType?: string;
+        timeRange?: string;
+    };
+}
+
+// 每 5 分钟执行一次
+schedule.scheduleJob('*/5 * * * *', () => {
     console.log(`[${new Date().toISOString()}] 定时任务执行：每 5 分钟运行一次`);
     getRowClassList();
 });
 
+// 读取价格策略配置
+const getPriceStrategy = () => {
+    try {
+        const configPath = path.join(__dirname, '../config/price-strategy.json');
+        const configContent = fs.readFileSync(configPath, 'utf-8');
+        return JSON.parse(configContent);
+    } catch (error) {
+        console.error('读取价格策略配置失败:', error);
+        return {
+            strategies: [
+                { amount: 0, price: 200 },
+                { amount: 1, price: 180 },
+                { amount: 2, price: 160 },
+                { amount: 3, price: 140 },
+                { amount: 4, price: 120 },
+                { amount: 5, price: 100 }
+            ]
+        };
+    }
+};
+
 const getRowClassList = async () => {
     try {
-
-        //StoresID会变
         const body = {
             "StoresID": "1517",
             "isweek": "0",
@@ -45,17 +78,22 @@ const getRowClassList = async () => {
             "method": "POST"
         });
         const json = await res.json();
+        
+        if (!json || !json.data) {
+            console.error('Invalid response:', json);
+            return;
+        }
+
         // 数组长度是3，代表上下午和晚上
         // 1.找到今天的课表
         const courseList: any[] = [];
-        (json.data as any[]).filter((obj) => {
+        (json.data as any[]).forEach((obj) => {
             Object.keys(obj).forEach((key) => {
                 if (obj[key].TitleDay == '今') {
                     courseList.push(...obj[key].listRowClass);
                 }
-            }
-            )
-        })
+            });
+        });
         console.log('courseList', courseList);
         // 2.找到今天约课情况,PreAboutCount 代表预约人数
         for (let index = 0; index < courseList.length; index++) {
@@ -72,27 +110,64 @@ const getRowClassList = async () => {
             // 计算时间差单位是分钟
             const diff = (ts - now) / 1000 / 60;
             if (diff > -0 && diff < 60) {
-                //判断1小时以内就修改价格，需要一个修改价格的策略
                 const afterPrice = await calPrice(item);
-                modifyPrice(item, afterPrice)
+                if (afterPrice !== null) {
+                    modifyPrice(item, afterPrice);
+                }
             }
         }
     } catch (error) {
         console.log('getRowClassList error', error);
-
     }
-
 }
 
 const calPrice = async (course: any) => {
-    const db = await getDb();
-    // TODO: 这里需要一个策略来计算价格
-    // 1.获取当前课程的价格
-    const sql = `SELECT * FROM price_range`;
-    // res  [ { discount: '1', amount: 3, price: 0 } ]
-    const res = await db.all(sql);
-    console.log('res', res);
-    return course.singlePrice
+    try {
+        // 获取当前预约人数和课程时长
+        const currentCount = parseInt(course.PreAboutCount) || 0;
+        const courseLength = course.Timelength;
+        
+        // 获取价格策略
+        const priceStrategy = getPriceStrategy();
+        
+        // 获取对应时长的策略列表
+        const lengthStrategies = priceStrategy.strategies[courseLength];
+        
+        // 如果找不到对应时长的策略，返回 null
+        if (!lengthStrategies) {
+            console.log(`未找到时长 ${courseLength} 分钟的价格策略`);
+            return null;
+        }
+        
+        // 找到对应的价格策略
+        const strategy = lengthStrategies.find((s: PriceStrategy) => s.amount === currentCount);
+        
+        // 如果找不到对应的策略，返回 null
+        if (!strategy) {
+            console.log(`未找到预约人数 ${currentCount} 对应的价格策略`);
+            return null;
+        }
+        
+        const currentPrice = parseFloat(course.singlePrice);
+        const newPrice = strategy.price;
+        
+        console.log(`课程: ${course.CourseName}`);
+        console.log(`课程时长: ${courseLength}分钟`);
+        console.log(`当前预约人数: ${currentCount}`);
+        console.log(`当前价格: ${currentPrice}`);
+        console.log(`策略价格: ${newPrice}`);
+        
+        // 如果当前价格和策略价格相同，返回 null 表示不需要修改
+        if (currentPrice === newPrice) {
+            console.log('价格相同，无需修改');
+            return null;
+        }
+        
+        return newPrice.toString();
+    } catch (error) {
+        console.error('计算价格时出错:', error);
+        return null; // 出错时返回 null
+    }
 }
 
 
@@ -161,6 +236,34 @@ const getPreAboutList = async () => {
 
 }
 
+// 添加日志记录函数
+const logPriceChange = (course: any, prePrice: string, curPrice: string) => {
+    const logDir = path.join(__dirname, '../logs');
+    const logFile = path.join(logDir, 'price-changes.log');
+    
+    // 确保日志目录存在
+    if (!fs.existsSync(logDir)) {
+        fs.mkdirSync(logDir, { recursive: true });
+    }
+    
+    // 使用本地时间
+    const now = new Date();
+    const localTime = now.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+    });
+    
+    const logEntry = `[${localTime}] 课程: ${course.CourseName}, 原价: ${prePrice}, 新价格: ${curPrice}, 预约人数: ${course.PreAboutCount}\n`;
+    
+    fs.appendFileSync(logFile, logEntry);
+};
+
+// 修改 modifyPrice 函数
 const modifyPrice = async (body: any, curPrice = '500') => {
     const prePrice = body.singlePrice;
     const newBody = {
@@ -172,61 +275,6 @@ const modifyPrice = async (body: any, curPrice = '500') => {
         "RowClassID": body.ID,
         token
     }
-
-    const testCourse = {
-        "Timelength": "90",
-        "Isshow": "1",
-        "startTime": "00:30",
-        "sminute": "30",
-        "shour": "00",
-        "LoginID": "14910",
-        "SiteName": "未安排教室",
-        "Site": "0",
-        "SKtime": "2025/5/20",
-        "Isjp": "0",
-        "color": "#9c4b4b",
-        "preAboutType": "2",
-        "firstPrice": "0.00",
-        "singlePrice": "200",
-        // 课程id
-        // 课程名称
-        "ID": "2782943",
-        "RowClassTypeqt": "2",
-        "IsPay": 0,
-        "Isdel": "0",
-        "snapUpPrice": "0.00",
-        "snapUpCount": "0",
-        "iszdqx": "0",
-        "RowClassInfo": "",
-        "PeriodOfTime": "1",
-        "Cycle": "2",
-        "Name": "li老师",
-        "payPrice": 0,
-        "SiteID": "0",
-        "PreAboutCount": "1",
-        "limitCount": "8",
-        "integral": "0",
-        "startTimes": "2025/5/20",
-        "LevelID": "1",
-        "RowType": "1",
-        "StoresID": "1517",
-        "endTimes": "2025/5/20",
-        "CourseID": "27444",
-        "AmemberCard": "23503,23504",
-        "RowClassType": "0",
-        "UpdTime": "2025/5/20 15:20:44",
-        "MinCount": "0",
-        "difficulty": "2",
-        "CourseName": "芭蕾基训",
-        "ClassName": "",
-        "ConsumptionOfClass": "1.5",
-        "firsPreAboutCount": "0",
-        "addTime": "2025/5/20 0:22:33",
-        "ListRowClassTime": "[]",
-        "RowClassID": "2782943",
-        token
-    }
-    console.log('newBody', newBody);
 
     const res = await fetch("https://test.xingxingzhihuo.com.cn/WebApi/editRowClass.aspx", {
         "headers": {
@@ -246,22 +294,14 @@ const modifyPrice = async (body: any, curPrice = '500') => {
             "Referrer-Policy": "strict-origin-when-cross-origin"
         },
         body: JSON.stringify(newBody),
-        // "body": "{\"Timelength\":\"90\",\"Isshow\":\"1\",\"startTime\":\"00:30\",\"sminute\":\"30\",\"shour\":\"00\",\"LoginID\":\"14910\",\"SiteName\":\"未安排教室\",\"Site\":\"0\",\"SKtime\":\"2025/5/20\",\"Isjp\":\"0\",\"color\":\"#9c4b4b\",\"preAboutType\":\"2\",\"firstPrice\":\"0.00\",\"singlePrice\":\"200\",\"ID\":\"2782943\",\"RowClassTypeqt\":\"2\",\"IsPay\":0,\"Isdel\":\"0\",\"snapUpPrice\":\"0.00\",\"snapUpCount\":\"0\",\"iszdqx\":\"0\",\"RowClassInfo\":\"\",\"PeriodOfTime\":\"1\",\"Cycle\":\"2\",\"Name\":\"li老师\",\"payPrice\":0,\"SiteID\":\"0\",\"PreAboutCount\":\"1\",\"limitCount\":\"8\",\"integral\":\"0\",\"startTimes\":\"2025/5/20\",\"LevelID\":\"1\",\"RowType\":\"1\",\"StoresID\":\"1517\",\"endTimes\":\"2025/5/20\",\"CourseID\":\"27444\",\"AmemberCard\":\"23503,23504\",\"RowClassType\":\"0\",\"UpdTime\":\"2025/5/20 15:20:44\",\"MinCount\":\"0\",\"difficulty\":\"2\",\"CourseName\":\"芭蕾基训\",\"ClassName\":\"\",\"ConsumptionOfClass\":\"1.5\",\"firsPreAboutCount\":\"0\",\"addTime\":\"2025/5/20 0:22:33\",\"ListRowClassTime\":\"[]\",\"RowClassID\":\"2782943\",\"token\":\"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJaSFlLIiwiZXhwIjoxNzQ3ODExNjc3LCJzdWIiOiJKV1QiLCJhdWQiOiIxNDkwOSIsImlhdCI6IjIwMjUvNS8yMCAxNToxNDozNyIsImRhdGEiOnsiTmFtZSI6IumSn-WFiOeUnyIsIklzZGlzYWJsZSI6MCwiUm9sZSI6IjAiLCJMaW1pdHMiOiIxLDIsMywzMSwzMiw0LDQxLDQyLDQzLDQ0LDUsNTEsNTIsNTMsNiw2MSw2Miw2Myw2NCw2NSw2Niw2Nyw2OCw2OSw2MDEsNjAyLDYwMyw3LDcxLDcyLDczLDc0LDc1LDgsODEsOSw5MSw5Miw5Myw5NCwxMCwxMDEsMTAyLDEwMywxMDQsMTEsMTExLDExMiwxMTMsMTE0LDExNSwyMSwyMiwyMywyNCwyNSwyNiwyNywxMDUsMjgsMTIsMTIxLDEyMiwxMjMsMTMsMTQsMTQxLDE0MiwxNSw2MDQsMzMsNjA1LDYwNiw2MDcsNjA4LDYwOSw2MTAsNjExLDYxMiw2MTMsNjE0LDYxNSw2MTYsNjE3LDYxOCw2MTksNjIwLDYyMSw2MDQxLDYwNDIsNjA0Myw2MDQ0LDYwNDUsMjksMjExLDIxMiwyMTMsMjE0LDE2LDE2MSwxNjIsMTYzLDE2NiwxNjcsMTY0LDYwNDYsNjA0Nyw2MDQ4LDYwNDksMjE1LDIxNiwxNjUsMjE3LDc4LDYwNTAsMjE4LDIxOSwyMTkwLDIxOTEsMjE5MiIsInVzZXJpZCI6IjE0OTA5IiwiU3RvcmVzSUQiOiIxNTE3IiwiSXNIZWFkT2ZmaWNlIjowLCJJc3RlciI6MX19.iQqqq5dBq2loy0QfgGKJXi_Rr4QgisQsUOdS0TdisZA\"}",
         "method": "POST"
     });
     const json = await res.json();
     console.log('json', json);
 
     if (json.orsuccess && json.orsuccess == 1) {
-        const db = await getDb();
-
-        await db.run(`INSERT INTO update_history (updateTime,prePrice,curPrice,courseName,courseID) VALUES (?,?,?,?,?)`, [
-            formatToLocalTime(Date.now()),
-            prePrice,
-            curPrice,
-            body.CourseName,
-            body.CourseID,
-        ])
+        // 记录价格变更到日志文件
+        logPriceChange(body, prePrice, curPrice);
     }
 }
 

@@ -1,0 +1,28 @@
+{
+    "strategies": {
+        "60": [
+            { "amount": 0, "price": 150 },
+            { "amount": 1, "price": 135 },
+            { "amount": 2, "price": 120 },
+            { "amount": 3, "price": 105 },
+            { "amount": 4, "price": 90 },
+            { "amount": 5, "price": 75 }
+        ],
+        "90": [
+            { "amount": 0, "price": 200 },
+            { "amount": 1, "price": 180 },
+            { "amount": 2, "price": 160 },
+            { "amount": 3, "price": 140 },
+            { "amount": 4, "price": 120 },
+            { "amount": 5, "price": 100 }
+        ],
+        "120": [
+            { "amount": 0, "price": 250 },
+            { "amount": 1, "price": 225 },
+            { "amount": 2, "price": 200 },
+            { "amount": 3, "price": 175 },
+            { "amount": 4, "price": 150 },
+            { "amount": 5, "price": 125 }
+        ]
+    }
+} 
