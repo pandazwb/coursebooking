@@ -2,27 +2,40 @@
     "strategies": {
         "60": [
             { "amount": 0, "price": 150 },
-            { "amount": 1, "price": 135 },
-            { "amount": 2, "price": 120 },
-            { "amount": 3, "price": 105 },
-            { "amount": 4, "price": 90 },
-            { "amount": 5, "price": 75 }
+            { "amount": 1, "price": 150 },
+            { "amount": 2, "price": 150 },
+            { "amount": 3, "price": 150 },
+            { "amount": 4, "price": 145 },
+            { "amount": 5, "price": 140 },
+            { "amount": 6, "price": 135 },
+            { "amount": 7, "price": 130 },
+            { "amount": 8, "price": 125 },
+            { "amount": 9, "price": 120 }
+
         ],
         "90": [
-            { "amount": 0, "price": 200 },
-            { "amount": 1, "price": 180 },
-            { "amount": 2, "price": 160 },
-            { "amount": 3, "price": 140 },
-            { "amount": 4, "price": 120 },
-            { "amount": 5, "price": 100 }
+            { "amount": 0, "price": 225 },
+            { "amount": 1, "price": 225 },
+            { "amount": 2, "price": 225 },
+            { "amount": 3, "price": 225 },
+            { "amount": 4, "price": 220 },
+            { "amount": 5, "price": 215 },
+            { "amount": 6, "price": 210 },
+            { "amount": 7, "price": 205 },
+            { "amount": 8, "price": 200 },
+            { "amount": 9, "price": 195 }
         ],
         "120": [
-            { "amount": 0, "price": 250 },
-            { "amount": 1, "price": 225 },
-            { "amount": 2, "price": 200 },
-            { "amount": 3, "price": 175 },
-            { "amount": 4, "price": 150 },
-            { "amount": 5, "price": 125 }
+            { "amount": 0, "price": 300 },
+            { "amount": 1, "price": 300 },
+            { "amount": 2, "price": 300 },
+            { "amount": 3, "price": 300 },
+            { "amount": 4, "price": 290 },
+            { "amount": 5, "price": 280 },
+            { "amount": 6, "price": 270 },
+            { "amount": 7, "price": 260 },
+            { "amount": 8, "price": 250 },
+            { "amount": 9, "price": 240 }
         ]
     }
 } 
