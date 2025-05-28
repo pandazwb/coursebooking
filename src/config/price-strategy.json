@@ -1,4 +1,5 @@
 {
+    "blockPrice": "99999",
     "strategies": {
         "60": [
             { "amount": 0, "price": 150 },

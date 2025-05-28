@@ -243,7 +243,7 @@ const getPreAboutList = async () => {
 }
 
 // 添加日志记录函数
-const logPriceChange = (course: any, prePrice: string, curPrice: string) => {
+const logPriceChange = (course: any, prePrice: string, curPrice: string, status: string = 'SUCCESS') => {
     const logDir = path.join(__dirname, '../logs');
     const logFile = path.join(logDir, 'price-changes.log');
     
@@ -264,7 +264,7 @@ const logPriceChange = (course: any, prePrice: string, curPrice: string) => {
         hour12: false
     });
     
-    const logEntry = `[${localTime}] 课程: ${course.CourseName}, 原价: ${prePrice}, 新价格: ${curPrice}, 预约人数: ${course.PreAboutCount}\n`;
+    const logEntry = `[${localTime}] 课程: ${course.CourseName}, 原价: ${prePrice}, 新价格: ${curPrice}, 预约人数: ${course.PreAboutCount}, 状态: ${status}\n`;
     
     fs.appendFileSync(logFile, logEntry);
 };
@@ -315,3 +315,167 @@ const modifyPrice = async (body: any, curPrice = '500') => {
 // 2.找到今天约课情况
 // // 3.修改价格
 getRowClassList()
+
+// Add new function to get next day's courses
+const getNextDayClassList = async () => {
+    try {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowStr = tomorrow.toISOString().split('T')[0].replace(/-/g, '/');
+
+        const body = {
+            "StoresID": "1517",
+            "isweek": "0",
+            "dateTime": tomorrowStr,
+            "RowClassType": "0",
+            "ClassTeacher": "",
+            "CourseID": "",
+            "SelectClass": "1",
+            "ClassID": "",
+            "RowType": 0,
+            token
+        }
+
+        const res = await fetch("https://test.xingxingzhihuo.com.cn/WebApi/getListRowClassNew.aspx", {
+            "headers": {
+                "accept": "application/json",
+                "accept-language": "zh-CN,zh;q=0.9,ja;q=0.8",
+                "access-control-allow-origin": "*",
+                "cache-control": "no-cache",
+                "content-type": "application/x-www-form-urlencoded",
+                "pragma": "no-cache",
+                "sec-ch-ua": "\"Google Chrome\";v=\"135\", \"Not-A.Brand\";v=\"8\", \"Chromium\";v=\"135\"",
+                "sec-ch-ua-mobile": "?0",
+                "sec-ch-ua-platform": "\"macOS\"",
+                "sec-fetch-dest": "empty",
+                "sec-fetch-mode": "cors",
+                "sec-fetch-site": "cross-site",
+                "Referer": "https://s.zhihuoyueke.com/",
+                "Referrer-Policy": "strict-origin-when-cross-origin"
+            },
+            "body": JSON.stringify(body),
+            "method": "POST"
+        });
+        const json = await res.json();
+        
+        if (!json || !json.data) {
+            console.error('Invalid response:', json);
+            return [];
+        }
+
+        const courseList: any[] = [];
+        (json.data as any[]).forEach((obj) => {
+            Object.keys(obj).forEach((key) => {
+                // 只取明天的课表
+                if (obj[key].TitleDay == '明') {
+                    courseList.push(...obj[key].listRowClass);
+                }
+            });
+        });
+        return courseList;
+    } catch (error) {
+        console.error('getNextDayClassList error:', error);
+        return [];
+    }
+}
+
+// Add retry mechanism for price modification
+const modifyPriceWithRetry = async (course: any, newPrice: string, maxRetries = 3) => {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            await modifyPrice(course, newPrice);
+            return true;
+        } catch (error) {
+            console.error(`Price modification attempt ${attempt} failed:`, error);
+            if (attempt === maxRetries) {
+                logPriceChange(course, course.singlePrice, newPrice, 'FAILED');
+                return false;
+            }
+            // Wait for 2 seconds before retrying
+            await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+    }
+    return false;
+}
+
+// Add new scheduled task for noon price updates
+const updateNextDayPrices = async () => {
+    console.log(`[${new Date().toISOString()}] 开始更新明天课程价格`);
+    const courses = await getNextDayClassList();
+    
+    for (const course of courses) {
+        const newPrice = await calPrice(course);
+        if (newPrice !== null) {
+            await modifyPriceWithRetry(course, newPrice);
+        }
+    }
+    console.log(`[${new Date().toISOString()}] 明天课程价格更新完成`);
+}
+
+// Add noon schedule
+schedule.scheduleJob('0 12 * * *', () => {
+    console.log(`[${new Date().toISOString()}] 定时任务执行：每天中午12点更新明天课程价格`);
+    updateNextDayPrices();
+});
+
+// Add test function for immediate execution
+const testNextDayPriceUpdate = async () => {
+    console.log(`[${new Date().toISOString()}] 测试：立即执行明天课程价格更新`);
+    try {
+        await updateNextDayPrices();
+        console.log(`[${new Date().toISOString()}] 测试完成：明天课程价格更新执行完毕`);
+    } catch (error) {
+        console.error(`[${new Date().toISOString()}] 测试失败：`, error);
+    }
+}
+
+// 测试：立即执行明天课程价格更新
+//testNextDayPriceUpdate();
+
+
+// Add new function to set block price
+const setBlockPrice = async () => {
+    console.log(`[${new Date().toISOString()}] 开始设置阻止选课价格`);
+    try {
+        const priceStrategy = getPriceStrategy();
+        const blockPrice = priceStrategy.blockPrice || '99999'; // 从配置中读取阻止价格，默认99999
+        
+        const courses = await getNextDayClassList();
+        let successCount = 0;
+        let failCount = 0;
+        
+        for (const course of courses) {
+            const result = await modifyPriceWithRetry(course, blockPrice);
+            if (result) {
+                successCount++;
+            } else {
+                failCount++;
+            }
+        }
+        
+        console.log(`[${new Date().toISOString()}] 阻止选课价格设置完成`);
+        console.log(`成功: ${successCount} 个课程, 失败: ${failCount} 个课程`);
+    } catch (error) {
+        console.error(`[${new Date().toISOString()}] 设置阻止选课价格失败:`, error);
+    }
+}
+
+// Add midnight schedule for block price
+schedule.scheduleJob('0 0 * * *', () => {
+    console.log(`[${new Date().toISOString()}] 定时任务执行：每天凌晨0点设置阻止选课价格`);
+    setBlockPrice();
+});
+
+// Add test function for immediate block price execution
+const testBlockPriceUpdate = async () => {
+    console.log(`[${new Date().toISOString()}] 测试：立即执行阻止选课价格设置`);
+    try {
+        await setBlockPrice();
+        console.log(`[${new Date().toISOString()}] 测试完成：阻止选课价格设置执行完毕`);
+    } catch (error) {
+        console.error(`[${new Date().toISOString()}] 测试失败：`, error);
+    }
+}
+
+// 测试：立即执行阻止选课价格设置
+//testBlockPriceUpdate();
