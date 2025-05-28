@@ -3,6 +3,7 @@ import { formatToLocalTime, getDb } from './db';
 import * as fs from 'fs';
 import * as path from 'path';
 import { TokenManager } from './token';
+import { sendErrorNotification, sendTokenUpdateFailNotification, sendTestEmail } from './email';
 
 // 替换原来的 token 常量
 const tokenManager = TokenManager.getInstance();
@@ -22,11 +23,88 @@ interface PriceStrategy {
     };
 }
 
-// 每 5 分钟执行一次
-schedule.scheduleJob('*/5 * * * *', () => {
+// 添加全局错误计数器
+let consecutiveErrors = 0;
+let lastTokenUpdateTime = Date.now();
+const MAX_CONSECUTIVE_ERRORS = 5;
+const TOKEN_UPDATE_TIMEOUT = 24 * 60 * 60 * 1000; // 24小时
+
+// 包装函数，添加错误处理
+const withErrorHandling = (fn: Function, context: string) => {
+    return async (...args: any[]) => {
+        try {
+            await fn(...args);
+            consecutiveErrors = 0; // 成功执行后重置错误计数
+        } catch (error) {
+            consecutiveErrors++;
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            console.error(`${context} 执行失败:`, errorMessage);
+            
+            // 记录错误到日志
+            const logDir = path.join(__dirname, '../logs');
+            const errorLogFile = path.join(logDir, 'error.log');
+            if (!fs.existsSync(logDir)) {
+                fs.mkdirSync(logDir, { recursive: true });
+            }
+            
+            const errorLogEntry = `[${new Date().toLocaleString('zh-CN')}] ${context}: ${errorMessage}\n`;
+            fs.appendFileSync(errorLogFile, errorLogEntry);
+            
+            // 如果连续错误次数超过阈值，发送邮件通知
+            if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+                await sendErrorNotification(
+                    `连续${consecutiveErrors}次执行失败: ${errorMessage}`,
+                    context
+                );
+                consecutiveErrors = 0; // 发送邮件后重置计数，避免重复发送
+            }
+        }
+    };
+};
+
+// 检查Token更新状态
+const checkTokenStatus = async () => {
+    try {
+        const tokenManager = TokenManager.getInstance();
+        const token = tokenManager.getToken();
+        
+        if (!token) {
+            await sendTokenUpdateFailNotification();
+            return;
+        }
+        
+        // 检查Token是否长时间未更新
+        const now = Date.now();
+        if (now - lastTokenUpdateTime > TOKEN_UPDATE_TIMEOUT) {
+            await sendTokenUpdateFailNotification();
+            lastTokenUpdateTime = now; // 重置时间，避免重复发送
+        }
+    } catch (error) {
+        console.error('检查Token状态失败:', error);
+    }
+};
+
+// 修改现有的定时任务，添加错误处理
+schedule.scheduleJob('*/5 * * * *', withErrorHandling(() => {
     console.log(`[${new Date().toISOString()}] 定时任务执行：每 5 分钟运行一次`);
     getRowClassList();
-});
+}, '每5分钟价格更新任务'));
+
+schedule.scheduleJob('0 12 * * *', withErrorHandling(() => {
+    console.log(`[${new Date().toISOString()}] 定时任务执行：每天中午12点更新明天课程价格`);
+    updateNextDayPrices();
+}, '中午12点价格更新任务'));
+
+schedule.scheduleJob('0 0 * * *', withErrorHandling(() => {
+    console.log(`[${new Date().toISOString()}] 定时任务执行：每天凌晨0点设置阻止选课价格`);
+    setBlockPrice();
+}, '凌晨0点阻止价格设置任务'));
+
+// 添加Token状态检查任务（每小时检查一次）
+schedule.scheduleJob('0 * * * *', withErrorHandling(() => {
+    console.log(`[${new Date().toISOString()}] 定时任务执行：检查Token状态`);
+    checkTokenStatus();
+}, 'Token状态检查任务'));
 
 // 读取价格策略配置
 const getPriceStrategy = () => {
@@ -49,7 +127,7 @@ const getPriceStrategy = () => {
     }
 };
 
-const getRowClassList = async () => {
+const getRowClassList = withErrorHandling(async () => {
     try {
         const body = {
             "StoresID": "1517",
@@ -126,7 +204,7 @@ const getRowClassList = async () => {
     } catch (error) {
         console.log('getRowClassList error', error);
     }
-}
+}, '获取今日课程列表');
 
 const calPrice = async (course: any, applyDiscount: boolean = true) => {
     try {
@@ -184,72 +262,6 @@ const calPrice = async (course: any, applyDiscount: boolean = true) => {
         console.error('计算价格时出错:', error);
         return null; // 出错时返回 null
     }
-}
-
-
-const getPreAboutList = async () => {
-
-    // const body = new FormData()
-    // body.append('StoresID', '1517')
-    // body.append('isweek', '0')
-    // body.append('dateTime', '')
-    // body.append('LoginID', '14909')
-    // body.append('RowClassType', '0')
-    // body.append('ClassTeacher', '')
-    // body.append('CourseID', '')
-    // body.append('SelectClass', '1')
-    // body.append('ClassID', '')
-    // body.append('RowType', '0')
-    // body.append('token', 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJaSFlLIiwiZXhwIjoxNzQ3ODExNjc3LCJzdWIiOiJKV1QiLCJhdWQiOiIxNDkwOSIsImlhdCI6IjIwMjUvNS8yMCAxNToxNDozNyIsImRhdGEiOnsiTmFtZSI6IumSn-WFiOeUnyIsIklzZGlzYWJsZSI6MCwiUm9sZSI6IjAiLCJMaW1pdHMiOiIxLDIsMywzMSwzMiw0LDQxLDQyLDQzLDQ0LDUsNTEsNTIsNTMsNiw2MSw2Miw2Myw2NCw2NSw2Niw2Nyw2OCw2OSw2MDEsNjAyLDYwMyw3LDcxLDcyLDczLDc0LDc1LDgsODEsOSw5MSw5Miw5Myw5NCwxMCwxMDEsMTAyLDEwMywxMDQsMTEsMTExLDExMiwxMTMsMTE0LDExNSwyMSwyMiwyMywyNCwyNSwyNiwyNywxMDUsMjgsMTIsMTIxLDEyMiwxMjMsMTMsMTQsMTQxLDE0MiwxNSw2MDQsMzMsNjA1LDYwNiw2MDcsNjA4LDYwOSw2MTAsNjExLDYxMiw2MTMsNjE0LDYxNSw2MTYsNjE3LDYxOCw2MTksNjIwLDYyMSw2MDQxLDYwNDIsNjA0Myw2MDQ0LDYwNDUsMjksMjExLDIxMiwyMTMsMjE0LDE2LDE2MSwxNjIsMTYzLDE2NiwxNjcsMTY0LDYwNDYsNjA0Nyw2MDQ4LDYwNDksMjE1LDIxNiwxNjUsMjE3LDc4LDYwNTAsMjE4LDIxOSwyMTkwLDIxOTEsMjE5MiIsInVzZXJpZCI6IjE0OTA5IiwiU3RvcmVzSUQiOiIxNTE3IiwiSXNIZWFkT2ZmaWNlIjowLCJJc3RlciI6MX19.iQqqq5dBq2loy0QfgGKJXi_Rr4QgisQsUOdS0TdisZA')
-
-    const body = {
-        "StoresID": "1517",
-        "isweek": "0",
-        "dateTime": "",
-        "LoginID": "14909",
-        "RowClassType": "0",
-        "ClassTeacher": "",
-        "CourseID": "",
-        "SelectClass": "1",
-        "ClassID": "",
-        "RowType": "0",
-        token
-    }
-
-    const res = await fetch("https://test.xingxingzhihuo.com.cn/WebApi/getListPreAbout.aspx", {
-        "headers": {
-            "accept": "application/json",
-            "accept-language": "zh-CN,zh;q=0.9,ja;q=0.8",
-            "access-control-allow-origin": "*",
-            "cache-control": "no-cache",
-            "content-type": "application/x-www-form-urlencoded",
-            "pragma": "no-cache",
-            "sec-ch-ua": "\"Google Chrome\";v=\"135\", \"Not-A.Brand\";v=\"8\", \"Chromium\";v=\"135\"",
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": "\"macOS\"",
-            "sec-fetch-dest": "empty",
-            "sec-fetch-mode": "cors",
-            "sec-fetch-site": "cross-site",
-            "Referer": "https://s.zhihuoyueke.com/",
-            "Referrer-Policy": "strict-origin-when-cross-origin"
-        },
-        "body": JSON.stringify(body),
-        "method": "POST"
-    });
-    const json = await res.json();
-    // 数组长度是3，代表上下午和晚上
-    const preAboutList: any[] = [];
-    (json.data as any[]).filter((obj) => {
-        Object.keys(obj).forEach((key) => {
-            if (obj[key].TitleDay == '今') {
-                preAboutList.push(...obj[key].listRowClass);
-            }
-        }
-        )
-    })
-    // PreAboutCount 代表预约人数
-    // console.log('preAboutList', preAboutList);
-
 }
 
 // 添加日志记录函数
@@ -409,7 +421,7 @@ const modifyPriceWithRetry = async (course: any, newPrice: string, maxRetries = 
 }
 
 // Add new scheduled task for noon price updates
-const updateNextDayPrices = async () => {
+const updateNextDayPrices = withErrorHandling(async () => {
     console.log(`[${new Date().toISOString()}] 开始更新明天课程价格`);
     const courses = await getNextDayClassList();
     
@@ -420,13 +432,7 @@ const updateNextDayPrices = async () => {
         }
     }
     console.log(`[${new Date().toISOString()}] 明天课程价格更新完成`);
-}
-
-// Add noon schedule
-schedule.scheduleJob('0 12 * * *', () => {
-    console.log(`[${new Date().toISOString()}] 定时任务执行：每天中午12点更新明天课程价格`);
-    updateNextDayPrices();
-});
+}, '更新明天课程价格');
 
 // Add test function for immediate execution
 const testNextDayPriceUpdate = async () => {
@@ -444,7 +450,7 @@ const testNextDayPriceUpdate = async () => {
 
 
 // Add new function to set block price
-const setBlockPrice = async () => {
+const setBlockPrice = withErrorHandling(async () => {
     console.log(`[${new Date().toISOString()}] 开始设置阻止选课价格`);
     try {
         const priceStrategy = getPriceStrategy();
@@ -468,7 +474,7 @@ const setBlockPrice = async () => {
     } catch (error) {
         console.error(`[${new Date().toISOString()}] 设置阻止选课价格失败:`, error);
     }
-}
+}, '设置阻止选课价格');
 
 // Add midnight schedule for block price
 schedule.scheduleJob('0 0 * * *', () => {
@@ -489,3 +495,25 @@ const testBlockPriceUpdate = async () => {
 
 // 测试：立即执行阻止选课价格设置
 //testBlockPriceUpdate();
+
+// 进程异常处理
+process.on('uncaughtException', async (error) => {
+    console.error('未捕获的异常:', error);
+    await sendErrorNotification(error.message, '未捕获的异常');
+    process.exit(1);
+});
+
+process.on('unhandledRejection', async (reason, promise) => {
+    console.error('未处理的Promise拒绝:', reason);
+    await sendErrorNotification(String(reason), '未处理的Promise拒绝');
+});
+
+// 在文件末尾添加测试邮件发送
+//console.log('正在发送测试邮件...');
+//sendTestEmail().then((success) => {
+//    if (success) {
+//        console.log('测试邮件发送完成，请检查收件箱');
+//    } else {
+//        console.log('测试邮件发送失败，请检查邮件配置');
+//    }
+//});

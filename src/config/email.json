@@ -1,0 +1,10 @@
+{
+    "host": "smtp.163.com",
+    "port": 465,
+    "secure": true,
+    "auth": {
+        "user": "incendiodance@163.com",
+        "pass": "GZqWzprL2ygiXMFv"
+    },
+    "to": "zhongwb.sjtu@gmail.com"
+} 

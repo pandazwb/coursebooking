@@ -7,10 +7,13 @@
   "scripts": {
     "build": "tsc",
     "build:prod": "chmod +x build.sh && ./build.sh",
-    "start": "node dist/app.js",
-    "dev": "ts-node src/app.ts",
-    "pm2:start": "npm run build:prod && pm2 start ecosystem.config.js",
-    "pm2:restart": "npm run build:prod && pm2 restart ecosystem.config.js"
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "pm2:start": "pm2 start ecosystem.config.js",
+    "pm2:stop": "pm2 stop course-price-manager",
+    "pm2:restart": "pm2 restart course-price-manager",
+    "pm2:logs": "pm2 logs course-price-manager",
+    "pm2:status": "pm2 status"
   },
   "dependencies": {
     "@types/node-schedule": "^2.1.7",
@@ -18,7 +21,9 @@
     "node-schedule": "^2.1.1",
     "schedule": "^0.5.0",
     "sqlite": "^5.1.1",
-    "sqlite3": "^5.1.7"
+    "sqlite3": "^5.1.7",
+    "nodemailer": "^6.9.0",
+    "@types/nodemailer": "^6.4.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.22",
