@@ -116,7 +116,8 @@ const getRowClassList = async () => {
             // 计算时间差单位是分钟
             const diff = (ts - now) / 1000 / 60;
             if (diff > -0 && diff < 60) {
-                const afterPrice = await calPrice(item);
+                // 当天价格修改使用折扣
+                const afterPrice = await calPrice(item, true);
                 if (afterPrice !== null) {
                     modifyPrice(item, afterPrice);
                 }
@@ -127,7 +128,7 @@ const getRowClassList = async () => {
     }
 }
 
-const calPrice = async (course: any) => {
+const calPrice = async (course: any, applyDiscount: boolean = true) => {
     try {
         // 获取当前预约人数和课程时长
         const currentCount = parseInt(course.PreAboutCount) || 0;
@@ -155,7 +156,16 @@ const calPrice = async (course: any) => {
         }
         
         const currentPrice = parseFloat(course.singlePrice);
-        const newPrice = strategy.price;
+        let newPrice = strategy.price;
+        
+        // 只在当天价格修改时应用折扣
+        if (applyDiscount && priceStrategy.discount && priceStrategy.discount > 0 && priceStrategy.discount < 1) {
+            // 计算折扣后价格，保留2位小数
+            const discountedPrice = newPrice * priceStrategy.discount;
+            // 向下取整
+            newPrice = Math.floor(discountedPrice);
+            console.log(`应用折扣 ${priceStrategy.discount}，原价: ${strategy.price}，折扣后: ${newPrice}`);
+        }
         
         console.log(`课程: ${course.CourseName}`);
         console.log(`课程时长: ${courseLength}分钟`);
@@ -404,7 +414,7 @@ const updateNextDayPrices = async () => {
     const courses = await getNextDayClassList();
     
     for (const course of courses) {
-        const newPrice = await calPrice(course);
+        const newPrice = await calPrice(course, true);
         if (newPrice !== null) {
             await modifyPriceWithRetry(course, newPrice);
         }
