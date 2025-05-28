@@ -9,7 +9,7 @@
     "build:prod": "chmod +x build.sh && ./build.sh",
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
-    "pm2:start": "pm2 start ecosystem.config.js",
+    "pm2:start": "npm run build && pm2 start ecosystem.config.js",
     "pm2:stop": "pm2 stop course-price-manager",
     "pm2:restart": "pm2 restart course-price-manager",
     "pm2:logs": "pm2 logs course-price-manager",
