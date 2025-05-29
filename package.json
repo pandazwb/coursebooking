@@ -5,15 +5,20 @@
   "description": "A simple TypeScript Express application",
   "main": "dist/app.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run build:clean && npm run sync:config",
+    "build:clean": "rm -f dist/config/*.template.json",
+    "sync:config": "cp src/config/*.json dist/config/",
+    "build:watch": "tsc --watch",
     "build:prod": "chmod +x build.sh && ./build.sh",
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
+    "dev:watch": "npm run build:watch & npm run pm2:logs",
     "pm2:start": "npm run build && pm2 start ecosystem.config.js",
     "pm2:stop": "pm2 stop course-price-manager",
-    "pm2:restart": "pm2 restart course-price-manager",
+    "pm2:restart": "npm run build && pm2 restart course-price-manager",
     "pm2:logs": "pm2 logs course-price-manager",
-    "pm2:status": "pm2 status"
+    "pm2:status": "pm2 status",
+    "pm2:reload": "npm run build && pm2 reload course-price-manager"
   },
   "dependencies": {
     "@types/node-schedule": "^2.1.7",
