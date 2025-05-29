@@ -51,6 +51,8 @@ export class TokenManager {
 
     public async updateToken() {
         try {
+            console.log('开始更新token...');
+
             const response = await fetch('https://test.xingxingzhihuo.com.cn/WebApi/login.aspx', {
                 method: 'POST',
                 headers: {
@@ -64,11 +66,12 @@ export class TokenManager {
             });
 
             const data = await response.json();
-            if (data.token) {
+            
+            if (data.orsuccess === '1' && data.token) {
                 this.saveToken(data.token);
                 console.log('Token 更新成功');
             } else {
-                console.error('Token 更新失败:', data);
+                console.error('Token 更新失败:', data.Msg || '未知错误');
             }
         } catch (error) {
             console.error('更新 token 时出错:', error);
@@ -77,5 +80,15 @@ export class TokenManager {
 
     public getToken(): string {
         return this.token;
+    }
+
+    public reloadConfig() {
+        try {
+            const rootDir = path.resolve(__dirname, '../../');
+            this.authConfig = JSON.parse(fs.readFileSync(path.join(rootDir, 'src/config/auth.json'), 'utf-8'));
+            console.log('配置重载成功');
+        } catch (error) {
+            console.error('配置重载失败:', error);
+        }
     }
 } 
