@@ -90,15 +90,15 @@ schedule.scheduleJob('*/5 * * * *', withErrorHandling(() => {
     getRowClassList();
 }, '每5分钟价格更新任务'));
 
-schedule.scheduleJob('0 12 * * *', withErrorHandling(() => {
-    console.log(`[${new Date().toISOString()}] 定时任务执行：每天中午12点更新明天课程价格`);
-    updateNextDayPrices();
-}, '中午12点价格更新任务'));
+//schedule.scheduleJob('0 12 * * *', withErrorHandling(() => {
+//    console.log(`[${new Date().toISOString()}] 定时任务执行：每天中午12点更新明天课程价格`);
+//    updateNextDayPrices();
+//}, '中午12点价格更新任务'));
 
-schedule.scheduleJob('0 0 * * *', withErrorHandling(() => {
-    console.log(`[${new Date().toISOString()}] 定时任务执行：每天凌晨0点设置阻止选课价格`);
-    setBlockPrice();
-}, '凌晨0点阻止价格设置任务'));
+//schedule.cheduleJob('0 0 * * *', withErrorHandling(() => {
+//    console.log(`[${new Date().toISOString()}] 定时任务执行：每天凌晨0点设置阻止选课价格`);
+//    setBlockPrice();
+//}, '凌晨0点阻止价格设置任务'));
 
 // 添加Token状态检查任务（每小时检查一次）
 schedule.scheduleJob('0 * * * *', withErrorHandling(() => {
@@ -477,10 +477,10 @@ const setBlockPrice = withErrorHandling(async () => {
 }, '设置阻止选课价格');
 
 // Add midnight schedule for block price
-schedule.scheduleJob('0 0 * * *', () => {
-    console.log(`[${new Date().toISOString()}] 定时任务执行：每天凌晨0点设置阻止选课价格`);
-    setBlockPrice();
-});
+//schedule.scheduleJob('0 0 * * *', () => {
+//    console.log(`[${new Date().toISOString()}] 定时任务执行：每天凌晨0点设置阻止选课价格`);
+//    setBlockPrice();
+//});
 
 // Add test function for immediate block price execution
 const testBlockPriceUpdate = async () => {
@@ -517,3 +517,7 @@ process.on('unhandledRejection', async (reason, promise) => {
 //        console.log('测试邮件发送失败，请检查邮件配置');
 //    }
 //});
+
+//设置最大预约天数的payload
+//{"SttingID":"25046","info":"5","token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJaSFlLIiwiZXhwIjoxNzQ4NjEwMzAyLCJzdWIiOiJKV1QiLCJhdWQiOiIxNDkwOSIsImlhdCI6IjIwMjUvNS8yOSAyMTowNTowMiIsImRhdGEiOnsiTmFtZSI6IumSn-WFiOeUnyIsIklzZGlzYWJsZSI6MCwiUm9sZSI6IjAiLCJMaW1pdHMiOiIxLDIsMywzMSwzMiw0LDQxLDQyLDQzLDQ0LDUsNTEsNTIsNTMsNiw2MSw2Miw2Myw2NCw2NSw2Niw2Nyw2OCw2OSw2MDEsNjAyLDYwMyw3LDcxLDcyLDczLDc0LDc1LDgsODEsOSw5MSw5Miw5Myw5NCwxMCwxMDEsMTAyLDEwMywxMDQsMTEsMTExLDExMiwxMTMsMTE0LDExNSwyMSwyMiwyMywyNCwyNSwyNiwyNywxMDUsMjgsMTIsMTIxLDEyMiwxMjMsMTMsMTQsMTQxLDE0MiwxNSw2MDQsMzMsNjA1LDYwNiw2MDcsNjA4LDYwOSw2MTAsNjExLDYxMiw2MTMsNjE0LDYxNSw2MTYsNjE3LDYxOCw2MTksNjIwLDYyMSw2MDQxLDYwNDIsNjA0Myw2MDQ0LDYwNDUsMjksMjExLDIxMiwyMTMsMjE0LDE2LDE2MSwxNjIsMTYzLDE2NiwxNjcsMTY0LDYwNDYsNjA0Nyw2MDQ4LDYwNDksMjE1LDIxNiwxNjUsMjE3LDc4LDYwNTAsMjE4LDIxOSwyMTkwLDIxOTEsMjE5MiIsInVzZXJpZCI6IjE0OTA5IiwiU3RvcmVzSUQiOiIxNTE3IiwiSXNIZWFkT2ZmaWNlIjowLCJJc3RlciI6MX19.RVfuTv0YKALSJxt4PqtiyYtRhJUiUWymFy7JUJtXEAw"}: 
+//https://test.xingxingzhihuo.com.cn/WebApi/editSttinginfo.aspx
