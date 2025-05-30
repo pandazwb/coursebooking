@@ -7,6 +7,11 @@ module.exports = {
         instances: 1,
         autorestart: true,
         watch: ['dist'],
+        ignore_watch: [
+            'dist/config',
+            'dist/logs',
+            '*.log'
+        ],
         max_memory_restart: '1G',
         env: {
             NODE_ENV: 'development'
