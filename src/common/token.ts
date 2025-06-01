@@ -60,7 +60,7 @@ export class TokenManager {
         }
     }
 
-    public async updateToken() {
+    public async updateToken(): Promise<boolean> {
         try {
             console.log('开始更新token...');
 
@@ -81,11 +81,14 @@ export class TokenManager {
             if (data.orsuccess === '1' && data.token) {
                 this.saveToken(data.token);
                 console.log('Token 更新成功');
+                return true;
             } else {
                 console.error('Token 更新失败:', data.Msg || '未知错误');
+                return false;
             }
         } catch (error) {
             console.error('更新 token 时出错:', error);
+            return false;
         }
     }
 

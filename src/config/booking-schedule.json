@@ -1,0 +1,7 @@
+{
+  "openBookingTime": "12:00",
+  "settingId": "25046",
+  "maxDaysWhenOpen": 2,
+  "maxDaysWhenClosed": 1,
+  "apiUrl": "https://test.xingxingzhihuo.com.cn/WebApi/editSttinginfo.aspx"
+} 

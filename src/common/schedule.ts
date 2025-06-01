@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { TokenManager } from './token';
 import { sendErrorNotification, sendTokenUpdateFailNotification, sendTestEmail } from './email';
+import { BookingManager } from '../services/booking-manager';
 
 // 替换原来的 token 常量
 const tokenManager = TokenManager.getInstance();
@@ -521,3 +522,57 @@ process.on('unhandledRejection', async (reason, promise) => {
 //设置最大预约天数的payload
 //{"SttingID":"25046","info":"5","token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJaSFlLIiwiZXhwIjoxNzQ4NjEwMzAyLCJzdWIiOiJKV1QiLCJhdWQiOiIxNDkwOSIsImlhdCI6IjIwMjUvNS8yOSAyMTowNTowMiIsImRhdGEiOnsiTmFtZSI6IumSn-WFiOeUnyIsIklzZGlzYWJsZSI6MCwiUm9sZSI6IjAiLCJMaW1pdHMiOiIxLDIsMywzMSwzMiw0LDQxLDQyLDQzLDQ0LDUsNTEsNTIsNTMsNiw2MSw2Miw2Myw2NCw2NSw2Niw2Nyw2OCw2OSw2MDEsNjAyLDYwMyw3LDcxLDcyLDczLDc0LDc1LDgsODEsOSw5MSw5Miw5Myw5NCwxMCwxMDEsMTAyLDEwMywxMDQsMTEsMTExLDExMiwxMTMsMTE0LDExNSwyMSwyMiwyMywyNCwyNSwyNiwyNywxMDUsMjgsMTIsMTIxLDEyMiwxMjMsMTMsMTQsMTQxLDE0MiwxNSw2MDQsMzMsNjA1LDYwNiw2MDcsNjA4LDYwOSw2MTAsNjExLDYxMiw2MTMsNjE0LDYxNSw2MTYsNjE3LDYxOCw2MTksNjIwLDYyMSw2MDQxLDYwNDIsNjA0Myw2MDQ0LDYwNDUsMjksMjExLDIxMiwyMTMsMjE0LDE2LDE2MSwxNjIsMTYzLDE2NiwxNjcsMTY0LDYwNDYsNjA0Nyw2MDQ4LDYwNDksMjE1LDIxNiwxNjUsMjE3LDc4LDYwNTAsMjE4LDIxOSwyMTkwLDIxOTEsMjE5MiIsInVzZXJpZCI6IjE0OTA5IiwiU3RvcmVzSUQiOiIxNTE3IiwiSXNIZWFkT2ZmaWNlIjowLCJJc3RlciI6MX19.RVfuTv0YKALSJxt4PqtiyYtRhJUiUWymFy7JUJtXEAw"}: 
 //https://test.xingxingzhihuo.com.cn/WebApi/editSttinginfo.aspx
+
+// 在文件末尾添加预约管理定时任务
+
+// 获取预约管理器实例
+const bookingManager = BookingManager.getInstance();
+const bookingConfig = bookingManager.getConfig();
+
+// 添加预约日志记录函数
+const logBookingSchedule = (message: string, status: 'SUCCESS' | 'FAILED' = 'SUCCESS') => {
+    const logDir = path.join(__dirname, '../logs');
+    const logFile = path.join(logDir, 'booking-schedule.log');
+    
+    if (!fs.existsSync(logDir)) {
+        fs.mkdirSync(logDir, { recursive: true });
+    }
+    
+    const logEntry = `[${formatToLocalTime(new Date())}] [${status}] ${message}\n`;
+    fs.appendFileSync(logFile, logEntry);
+};
+
+// 每天凌晨0点整，设置最大预约天数为1天
+schedule.scheduleJob('0 0 * * *', withErrorHandling(async () => {
+    console.log('\n=== 凌晨0点定时任务 ===');
+    console.log('时间:', formatToLocalTime(new Date()));
+    
+    const success = await bookingManager.closeBooking();
+    if (success) {
+        logBookingSchedule('设置最大预约天数为1天（关闭次日预约）');
+    } else {
+        logBookingSchedule('设置最大预约天数为1天失败', 'FAILED');
+        await sendErrorNotification('预约设置失败', '凌晨0点设置最大预约天数为1天失败');
+    }
+}, '凌晨0点关闭预约'));
+
+// 每天中午12点（或配置的时间），设置最大预约天数为2天
+const [hour, minute] = bookingConfig.openBookingTime.split(':').map(Number);
+const cronExpression = `${minute} ${hour} * * *`;
+
+schedule.scheduleJob(cronExpression, withErrorHandling(async () => {
+    console.log(`\n=== ${bookingConfig.openBookingTime}定时任务 ===`);
+    console.log('时间:', formatToLocalTime(new Date()));
+    
+    const success = await bookingManager.openBooking();
+    if (success) {
+        logBookingSchedule('设置最大预约天数为2天（开放次日预约）');
+    } else {
+        logBookingSchedule('设置最大预约天数为2天失败', 'FAILED');
+        await sendErrorNotification('预约设置失败', `${bookingConfig.openBookingTime}设置最大预约天数为2天失败`);
+    }
+}, `${bookingConfig.openBookingTime}开放预约`));
+
+console.log(`📅 预约管理定时任务已启动:`);
+console.log(`   - 每天凌晨0点: 关闭次日预约（设置为1天）`);
+console.log(`   - 每天${bookingConfig.openBookingTime}: 开放次日预约（设置为2天）`);
