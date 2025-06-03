@@ -5,6 +5,7 @@ import * as path from 'path';
 import { TokenManager } from './token';
 import { sendErrorNotification, sendTokenUpdateFailNotification, sendTestEmail } from './email';
 import { BookingManager } from '../services/booking-manager';
+import { ReconciliationService } from '../services/reconciliation-service';
 
 // 替换原来的 token 常量
 const tokenManager = TokenManager.getInstance();
@@ -576,3 +577,236 @@ schedule.scheduleJob(cronExpression, withErrorHandling(async () => {
 console.log(`📅 预约管理定时任务已启动:`);
 console.log(`   - 每天凌晨0点: 关闭次日预约（设置为1天）`);
 console.log(`   - 每天${bookingConfig.openBookingTime}: 开放次日预约（设置为2天）`);
+
+// 获取售卡统计信息的接口：https://test.xingxingzhihuo.com.cn/WebApi/getCradTurnover.aspx
+// payload:{"StoresID":"1517","Stime":"2025-05-28","Etime":"2025-06-04","stype":"4","SelectCardID":"","token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJaSFlLIiwiZXhwIjoxNzQ5MDQxNDc0LCJzdWIiOiJKV1QiLCJhdWQiOiIxNDkwOSIsImlhdCI6IjIwMjUvNi8zIDIwOjUxOjE0IiwiZGF0YSI6eyJOYW1lIjoi6ZKf5YWI55SfIiwiSXNkaXNhYmxlIjowLCJSb2xlIjoiMCIsIkxpbWl0cyI6IjEsMiwzLDMxLDMyLDQsNDEsNDIsNDMsNDQsNSw1MSw1Miw1Myw2LDYxLDYyLDYzLDY0LDY1LDY2LDY3LDY4LDY5LDYwMSw2MDIsNjAzLDcsNzEsNzIsNzMsNzQsNzUsOCw4MSw5LDkxLDkyLDkzLDk0LDEwLDEwMSwxMDIsMTAzLDEwNCwxMSwxMTEsMTEyLDExMywxMTQsMTE1LDIxLDIyLDIzLDI0LDI1LDI2LDI3LDEwNSwyOCwxMiwxMjEsMTIyLDEyMywxMywxNCwxNDEsMTQyLDE1LDYwNCwzMyw2MDUsNjA2LDYwNyw2MDgsNjA5LDYxMCw2MTEsNjEyLDYxMyw2MTQsNjE1LDYxNiw2MTcsNjE4LDYxOSw2MjAsNjIxLDYwNDEsNjA0Miw2MDQzLDYwNDQsNjA0NSwyOSwyMTEsMjEyLDIxMywyMTQsMTYsMTYxLDE2MiwxNjMsMTY2LDE2NywxNjQsNjA0Niw2MDQ3LDYwNDgsNjA0OSwyMTUsMjE2LDE2NSwyMTcsNzgsNjA1MCwyMTgsMjE5LDIxOTAsMjE5MSwyMTkyIiwidXNlcmlkIjoiMTQ5MDkiLCJTdG9yZXNJRCI6IjE1MTciLCJJc0hlYWRPZmZpY2UiOjAsIklzdGVyIjoxfX0.xkmyVsoQ5T02wEIi8T0hhxWbrxarXNi7sRJSLA9JlSM"}: 
+//response:
+/*
+{
+    "Stime": "2025-05-28",
+    "orsuccess": "1",
+    "Etime": "2025-06-04",
+    "Msg": "获取成功",
+    "listall": [
+      {
+        "CradName": "储值卡",
+        "allCountsk": 76,
+        "allAmountsk": 34868.00,
+        "allCountxf": 18,
+        "allAmountxf": 5594.00,
+        "CradID": 23503
+      }
+    ]
+  }
+  
+  其中，总金额 =allAmountsk + allAmountxf 
+  
+  */
+
+  // 会员卡片剩余余额的查询接口和实例：
+  /*
+  https://test.xingxingzhihuo.com.cn/WebApi/getListSYKSMembers.aspx
+
+{"pages":1,"psize":10,"StoresID":"1517","SelectName":"","CardType":"4","OderType":"1","CardDays1":"0","CardDays2":"0","Amount1":"99999","Amount2":"0","CardNumber1":"30","CardNumber2":"0","selectCardID":"","token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJaSFlLIiwiZXhwIjoxNzQ5MDQxNDc0LCJzdWIiOiJKV1QiLCJhdWQiOiIxNDkwOSIsImlhdCI6IjIwMjUvNi8zIDIwOjUxOjE0IiwiZGF0YSI6eyJOYW1lIjoi6ZKf5YWI55SfIiwiSXNkaXNhYmxlIjowLCJSb2xlIjoiMCIsIkxpbWl0cyI6IjEsMiwzLDMxLDMyLDQsNDEsNDIsNDMsNDQsNSw1MSw1Miw1Myw2LDYxLDYyLDYzLDY0LDY1LDY2LDY3LDY4LDY5LDYwMSw2MDIsNjAzLDcsNzEsNzIsNzMsNzQsNzUsOCw4MSw5LDkxLDkyLDkzLDk0LDEwLDEwMSwxMDIsMTAzLDEwNCwxMSwxMTEsMTEyLDExMywxMTQsMTE1LDIxLDIyLDIzLDI0LDI1LDI2LDI3LDEwNSwyOCwxMiwxMjEsMTIyLDEyMywxMywxNCwxNDEsMTQyLDE1LDYwNCwzMyw2MDUsNjA2LDYwNyw2MDgsNjA5LDYxMCw2MTEsNjEyLDYxMyw2MTQsNjE1LDYxNiw2MTcsNjE4LDYxOSw2MjAsNjIxLDYwNDEsNjA0Miw2MDQzLDYwNDQsNjA0NSwyOSwyMTEsMjEyLDIxMywyMTQsMTYsMTYxLDE2MiwxNjMsMTY2LDE2NywxNjQsNjA0Niw2MDQ3LDYwNDgsNjA0OSwyMTUsMjE2LDE2NSwyMTcsNzgsNjA1MCwyMTgsMjE5LDIxOTAsMjE5MSwyMTkyIiwidXNlcmlkIjoiMTQ5MDkiLCJTdG9yZXNJRCI6IjE1MTciLCJJc0hlYWRPZmZpY2UiOjAsIklzdGVyIjoxfX0.xkmyVsoQ5T02wEIi8T0hhxWbrxarXNi7sRJSLA9JlSM"}
+
+{
+  "data": [
+    {
+      "PurchaseAmount": "100.00",
+      "CardID": "23503",
+      "CardName": "储值卡",
+      "OverdueTime": "2025/5/29",
+      "Phone": "15921985593",
+      "isDel": "0",
+      "CardNum": "",
+      "vid": "456079",
+      "SourceIDs": "0",
+      "SourceName": "",
+      "Isdisable": "0",
+      "ID": "477240",
+      "TypeLabel": "",
+      "WxHeadUrl": "https://tp.xingxingzhihuo.com.cn/zhyk/wx/moren.png",
+      "Note": "流水号：7895004855876147",
+      "CardDays": "-6",
+      "sourceID": "14909",
+      "HeadUrl": "",
+      "integral": "0",
+      "Name": "俊俊",
+      "isMain": "1",
+      "MainID": "0",
+      "StoresID": "1517",
+      "UpdTime": "2025/6/1 15:48:49",
+      "CardType": "4",
+      "Amount": "0.00",
+      "sourceName": "钟先生",
+      "CreateTime": "2025/5/29 19:17:34",
+      "CardNumber": "0",
+      "addTime": "2025/5/29 19:17:34"
+    },
+    {
+      "PurchaseAmount": "100.00",
+      "CardID": "23503",
+      "CardName": "储值卡",
+      "OverdueTime": "2025/5/29",
+      "Phone": "13611058902",
+      "isDel": "0",
+      "CardNum": "",
+      "vid": "456085",
+      "SourceIDs": "0",
+      "SourceName": "",
+      "Isdisable": "0",
+      "ID": "477243",
+      "TypeLabel": "",
+      "WxHeadUrl": "https://tp.xingxingzhihuo.com.cn/zhyk/wx/moren.png",
+      "Note": "流水号：7895004855850871",
+      "CardDays": "-6",
+      "sourceID": "14909",
+      "HeadUrl": "",
+      "integral": "0",
+      "Name": "梅丽莎",
+      "isMain": "1",
+      "MainID": "0",
+      "StoresID": "1517",
+      "UpdTime": "2025/6/1 16:35:57",
+      "CardType": "4",
+      "Amount": "0.00",
+      "sourceName": "钟先生",
+      "CreateTime": "2025/5/29 19:18:59",
+      "CardNumber": "0",
+      "addTime": "2025/5/29 19:18:59"
+    },
+    {
+      "PurchaseAmount": "200.00",
+      "CardID": "23503",
+      "CardName": "储值卡",
+      "OverdueTime": "2025/5/30",
+      "Phone": "13917985059",
+      "isDel": "0",
+      "CardNum": "",
+      "vid": "456532",
+      "SourceIDs": "0",
+      "SourceName": "",
+      "Isdisable": "0",
+      "ID": "477528",
+      "TypeLabel": "",
+      "WxHeadUrl": "https://tp.xingxingzhihuo.com.cn/zhyk/upload_images/165d8b0e6a3d4d2d9cdcbcc535ed6bfa.jpeg",
+      "Note": "流水号：7895225862771993",
+      "CardDays": "-5",
+      "sourceID": "15201",
+      "HeadUrl": "",
+      "integral": "0",
+      "Name": "茉小莉",
+      "isMain": "1",
+      "MainID": "0",
+      "StoresID": "1517",
+      "UpdTime": "2025/5/31 13:01:23",
+      "CardType": "4",
+      "Amount": "12.00",
+      "sourceName": "吴明",
+      "CreateTime": "2025/5/30 16:59:51",
+      "CardNumber": "0",
+      "addTime": "2025/5/30 16:59:51"
+    },
+
+    其中 Amount 字段即卡内余额
+  */
+
+/*
+会员已消课的小费金额统计
+
+https://test.xingxingzhihuo.com.cn/WebApi/getListOrderRecordTJ.aspx
+
+{"StoresID":"1517","sTime":"2025-05-28","eTime":"2025-06-04","stype":"4","SelectName":"","token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJaSFlLIiwiZXhwIjoxNzQ5MDQxNDc0LCJzdWIiOiJKV1QiLCJhdWQiOiIxNDkwOSIsImlhdCI6IjIwMjUvNi8zIDIwOjUxOjE0IiwiZGF0YSI6eyJOYW1lIjoi6ZKf5YWI55SfIiwiSXNkaXNhYmxlIjowLCJSb2xlIjoiMCIsIkxpbWl0cyI6IjEsMiwzLDMxLDMyLDQsNDEsNDIsNDMsNDQsNSw1MSw1Miw1Myw2LDYxLDYyLDYzLDY0LDY1LDY2LDY3LDY4LDY5LDYwMSw2MDIsNjAzLDcsNzEsNzIsNzMsNzQsNzUsOCw4MSw5LDkxLDkyLDkzLDk0LDEwLDEwMSwxMDIsMTAzLDEwNCwxMSwxMTEsMTEyLDExMywxMTQsMTE1LDIxLDIyLDIzLDI0LDI1LDI2LDI3LDEwNSwyOCwxMiwxMjEsMTIyLDEyMywxMywxNCwxNDEsMTQyLDE1LDYwNCwzMyw2MDUsNjA2LDYwNyw2MDgsNjA5LDYxMCw2MTEsNjEyLDYxMyw2MTQsNjE1LDYxNiw2MTcsNjE4LDYxOSw2MjAsNjIxLDYwNDEsNjA0Miw2MDQzLDYwNDQsNjA0NSwyOSwyMTEsMjEyLDIxMywyMTQsMTYsMTYxLDE2MiwxNjMsMTY2LDE2NywxNjQsNjA0Niw2MDQ3LDYwNDgsNjA0OSwyMTUsMjE2LDE2NSwyMTcsNzgsNjA1MCwyMTgsMjE5LDIxOTAsMjE5MSwyMTkyIiwidXNlcmlkIjoiMTQ5MDkiLCJTdG9yZXNJRCI6IjE1MTciLCJJc0hlYWRPZmZpY2UiOjAsIklzdGVyIjoxfX0.xkmyVsoQ5T02wEIi8T0hhxWbrxarXNi7sRJSLA9JlSM"}: 
+
+ "data": [
+    {
+      "Phone": "15901698368",
+      "allCount": "5",
+      "CardType": "4",
+      "djValue": "1.00",
+      "MembersID": "471974",
+      "Name": "小明",
+      "OrderType": 1,
+      "CardName": "储值卡",
+      "Amount": 1000.00,
+      "sumNumber": "0",
+      "sumAmount": "557.00",
+      "OrderCode": "202505230055170005"
+    },
+    {
+      "Phone": "15846516328",
+      "allCount": "1",
+      "CardType": "4",
+      "djValue": "1.00",
+      "MembersID": "476864",
+      "Name": "思敏",
+      "OrderType": 1,
+      "CardName": "储值卡",
+      "Amount": 500.00,
+      "sumNumber": "0",
+      "sumAmount": "84.00",
+      "OrderCode": "202505282333090010"
+    },
+    {
+      "Phone": "18321347116",
+      "allCount": "4",
+      "CardType": "4",
+      "djValue": "1.00",
+      "MembersID": "476865",
+      "Name": "赵红",
+      "OrderType": 1,
+      "CardName": "储值卡",
+      "Amount": 1000.00,
+      "sumNumber": "0",
+      "sumAmount": "339.00",
+      "OrderCode": "202505282337310011"
+    },
+    {
+      "Phone": "13501724350",
+      "allCount": "3",
+      "CardType": "4",
+      "djValue": "1.00",
+      "MembersID": "476872",
+      "Name": "韩菲",
+      "OrderType": 1,
+      "CardName": "储值卡",
+      "Amount": 500.00,
+      "sumNumber": "0",
+      "sumAmount": "279.00",
+      "OrderCode": "202505282340570013"
+    },
+
+
+    其中 sumAmount 为已消耗的金额
+*/
+
+// 在文件末尾添加核账相关代码
+
+// 核账任务 - 每天晚上11点执行
+schedule.scheduleJob('0 23 * * *', withErrorHandling(async () => {
+    console.log(`\n=== 每日核账任务 ===`);
+    console.log('时间:', new Date().toLocaleString('zh-CN'));
+    
+    try {
+        const reconciliationService = ReconciliationService.getInstance();
+        const result = await reconciliationService.performReconciliation();
+        
+        if (!result.isBalanced) {
+            // 如果账目不平衡，发送告警邮件
+            await sendErrorNotification(
+                `账目不平衡！差额: ¥${result.difference.toFixed(2)}`,
+                '每日核账告警'
+            );
+        }
+        
+        console.log('✅ 每日核账任务完成');
+    } catch (error) {
+        console.error('❌ 每日核账任务失败:', error);
+        await sendErrorNotification(
+            `核账任务执行失败: ${error}`,
+            '核账任务错误'
+        );
+    }
+}, '每日核账任务'));
+
+console.log(`📊 核账任务已启动: 每天晚上23:00执行`);

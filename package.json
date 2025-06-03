@@ -18,7 +18,8 @@
     "pm2:restart": "npm run build && pm2 restart course-price-manager",
     "pm2:logs": "pm2 logs course-price-manager",
     "pm2:status": "pm2 status",
-    "pm2:reload": "npm run build && pm2 reload course-price-manager"
+    "pm2:reload": "npm run build && pm2 reload course-price-manager",
+    "test:reconciliation": "npx ts-node test-reconciliation.ts"
   },
   "dependencies": {
     "@types/node-schedule": "^2.1.7",
