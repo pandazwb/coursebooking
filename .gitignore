@@ -41,6 +41,7 @@ src/output/
 **/output/
 *user-course-records*.json
 *user-records*.json
+*user-reconciliation*.json
 *export*.json
 *reconciliation_*.json
 

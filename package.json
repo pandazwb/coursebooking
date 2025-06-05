@@ -20,7 +20,9 @@
     "pm2:status": "pm2 status",
     "pm2:reload": "npm run build && pm2 reload course-price-manager",
     "test:reconciliation": "npx ts-node test-reconciliation.ts",
-    "export:user-records": "npx ts-node src/scripts/export-user-records.ts"
+    "export:user-records": "npx ts-node src/scripts/export-user-records.ts",
+    "user-reconciliation": "npx ts-node src/scripts/user-reconciliation.ts",
+    "compare-reconciliation": "npx ts-node src/scripts/compare-reconciliation.ts"
   },
   "dependencies": {
     "@types/node-schedule": "^2.1.7",

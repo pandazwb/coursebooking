@@ -821,6 +821,7 @@ console.log(`📊 核账任务已启动: 每天晚上23:00执行`);
 
 // 添加用户上课记录导出功能
 import { userCourseRecordsService } from '../services/user-course-records';
+import { userReconciliationService } from '../services/user-reconciliation-service';
 
 // 手动调用的导出功能（注释掉，需要时取消注释）
 // const testExportUserRecords = async () => {
@@ -833,5 +834,23 @@ import { userCourseRecordsService } from '../services/user-course-records';
 //     }
 // };
 
+// 手动调用的用户核账功能（注释掉，需要时取消注释）
+// const testUserReconciliation = async () => {
+//     console.log('开始测试用户核账功能...');
+//     try {
+//         // 测试单个用户核账
+//         // const result = await userReconciliationService.reconcileUser('478926', '测试用户');
+//         
+//         // 测试所有用户核账
+//         const result = await userReconciliationService.exportUserReconciliation();
+//         console.log(`测试核账完成: ${result}`);
+//     } catch (error) {
+//         console.error('测试核账失败:', error);
+//     }
+// };
+
 // 取消注释下面这行来立即执行导出
 // testExportUserRecords();
+
+// 取消注释下面这行来立即执行用户核账
+// testUserReconciliation();
