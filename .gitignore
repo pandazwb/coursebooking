@@ -36,6 +36,14 @@ yarn-error.log*
 src/config/token.json
 src/config/auth.json
 
+# User data exports and output files (contain sensitive user information)
+src/output/
+**/output/
+*user-course-records*.json
+*user-records*.json
+*export*.json
+*reconciliation_*.json
+
 # But keep the template files
 !src/config/token.template.json
 !src/config/auth.template.json

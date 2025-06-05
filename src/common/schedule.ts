@@ -10,10 +10,12 @@ import { ReconciliationService } from '../services/reconciliation-service';
 // 替换原来的 token 常量
 const tokenManager = TokenManager.getInstance();
 
-// 在需要 token 的地方使用
-const token = tokenManager.getToken();
+// 修改token获取方式，确保总是获取最新token
+const getToken = () => {
+    return tokenManager.getToken();
+};
 
-//{"StoresID":"1517","token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJaSFlLIiwiZXhwIjoxNzQ4MTA2Mjg2LCJzdWIiOiJKV1QiLCJhdWQiOiIxNDkwOSIsImlhdCI6IjIwMjUvNS8yNCAxOjA0OjQ2IiwiZGF0YSI6eyJOYW1lIjoi6ZKf5YWI55SfIiwiSXNkaXNhYmxlIjowLCJSb2xlIjoiMCIsIkxpbWl0cyI6IjEsMiwzLDMxLDMyLDQsNDEsNDIsNDMsNDQsNSw1MSw1Miw1Myw2LDYxLDYyLDYzLDY0LDY1LDY2LDY3LDY4LDY5LDYwMSw2MDIsNjAzLDcsNzEsNzIsNzMsNzQsNzUsOCw4MSw5LDkxLDkyLDkzLDk0LDEwLDEwMSwxMDIsMTAzLDEwNCwxMSwxMTEsMTEyLDExMywxMTQsMTE1LDIxLDIyLDIzLDI0LDI1LDI2LDI3LDEwNSwyOCwxMiwxMjEsMTIyLDEyMywxMywxNCwxNDEsMTQyLDE1LDYwNCwzMyw2MDUsNjA2LDYwNyw2MDgsNjA5LDYxMCw2MTEsNjEyLDYxMyw2MTQsNjE1LDYxNiw2MTcsNjE4LDYxOSw2MjAsNjIxLDYwNDEsNjA0Miw2MDQzLDYwNDQsNjA0NSwyOSwyMTEsMjEyLDIxMywyMTQsMTYsMTYxLDE2MiwxNjMsMTY2LDE2NywxNjQsNjA0Niw2MDQ3LDYwNDgsNjA0OSwyMTUsMjE2LDE2NSwyMTcsNzgsNjA1MCwyMTgsMjE5LDIxOTAsMjE5MSwyMTkyIiwidXNlcmlkIjoiMTQ5MDkiLCJTdG9yZXNJRCI6IjE1MTciLCJJc0hlYWRPZmZpY2UiOjAsIklzdGVyIjoxfX0.8Ivp-H04N_w0KdUBgHvmpX0hZO6ZZuxMRfkNLDBK4LA"}: 
+// 删除硬编码的token注释
 
 // Add at the top of the file
 interface PriceStrategy {
@@ -64,22 +66,28 @@ const withErrorHandling = (fn: Function, context: string) => {
     };
 };
 
-// 检查Token更新状态
+// 修改检查Token更新状态函数
 const checkTokenStatus = async () => {
     try {
-        const tokenManager = TokenManager.getInstance();
-        const token = tokenManager.getToken();
+        const token = getToken();
         
         if (!token) {
-            await sendTokenUpdateFailNotification();
+            console.log('Token为空，尝试更新...');
+            const success = await tokenManager.updateToken();
+            if (!success) {
+                await sendTokenUpdateFailNotification();
+            }
             return;
         }
         
-        // 检查Token是否长时间未更新
-        const now = Date.now();
-        if (now - lastTokenUpdateTime > TOKEN_UPDATE_TIMEOUT) {
-            await sendTokenUpdateFailNotification();
-            lastTokenUpdateTime = now; // 重置时间，避免重复发送
+        // 验证Token有效性
+        const isValid = await tokenManager.validateToken();
+        if (!isValid) {
+            console.log('Token无效，尝试更新...');
+            const success = await tokenManager.updateToken();
+            if (!success) {
+                await sendTokenUpdateFailNotification();
+            }
         }
     } catch (error) {
         console.error('检查Token状态失败:', error);
@@ -141,7 +149,7 @@ const getRowClassList = withErrorHandling(async () => {
             "SelectClass": "1",
             "ClassID": "",
             "RowType": 0,
-            token
+            token: getToken()
         }
         const res = await fetch("https://test.xingxingzhihuo.com.cn/WebApi/getListRowClassNew.aspx", {
             "headers": {
@@ -303,7 +311,7 @@ const modifyPrice = async (body: any, curPrice = '500') => {
         payPrice: Number(body.payPrice),
         "ListRowClassTime": "[]",
         "RowClassID": body.ID,
-        token
+        token: getToken()
     }
 
     const res = await fetch("https://test.xingxingzhihuo.com.cn/WebApi/editRowClass.aspx", {
@@ -357,7 +365,7 @@ const getNextDayClassList = async () => {
             "SelectClass": "1",
             "ClassID": "",
             "RowType": 0,
-            token
+            token: getToken()
         }
 
         const res = await fetch("https://test.xingxingzhihuo.com.cn/WebApi/getListRowClassNew.aspx", {
@@ -810,3 +818,20 @@ schedule.scheduleJob('0 23 * * *', withErrorHandling(async () => {
 }, '每日核账任务'));
 
 console.log(`📊 核账任务已启动: 每天晚上23:00执行`);
+
+// 添加用户上课记录导出功能
+import { userCourseRecordsService } from '../services/user-course-records';
+
+// 手动调用的导出功能（注释掉，需要时取消注释）
+// const testExportUserRecords = async () => {
+//     console.log('开始测试导出所有用户上课记录...');
+//     try {
+//         const filePath = await userCourseRecordsService.exportAllUserCourseRecords();
+//         console.log(`测试导出完成，文件路径: ${filePath}`);
+//     } catch (error) {
+//         console.error('测试导出失败:', error);
+//     }
+// };
+
+// 取消注释下面这行来立即执行导出
+// testExportUserRecords();
