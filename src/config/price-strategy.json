@@ -1,6 +1,6 @@
 {
     "blockPrice": "99999",
-    "discount": 0.7,
+    "discount": 0.85,
     "strategies": {
         "60": [
             { "amount": 0, "price": 135 },
