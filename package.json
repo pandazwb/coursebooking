@@ -20,6 +20,7 @@
     "pm2:status": "pm2 status",
     "pm2:reload": "npm run build && pm2 reload course-price-manager",
     "test:reconciliation": "npx ts-node test-reconciliation.ts",
+    "test:payment-reconciliation": "npx ts-node test-payment-reconciliation.ts",
     "export:user-records": "npx ts-node src/scripts/export-user-records.ts",
     "user-reconciliation": "npx ts-node src/scripts/user-reconciliation.ts",
     "compare-reconciliation": "npx ts-node src/scripts/compare-reconciliation.ts"
