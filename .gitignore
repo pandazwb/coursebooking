@@ -35,6 +35,7 @@ yarn-error.log*
 # Config files that might contain sensitive data
 src/config/token.json
 src/config/auth.json
+src/config/shouqianba.json
 
 # User data exports and output files (contain sensitive user information)
 src/output/
