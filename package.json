@@ -23,6 +23,7 @@
     "test:reconciliation:accurate": "npx ts-node test-accurate-reconciliation.ts",
     "test:payment-reconciliation": "npx ts-node test-payment-reconciliation.ts",
     "test:user-reconciliation:accurate": "npx ts-node src/scripts/test-user-reconciliation-accurate.ts",
+    "test:daily-reconciliation": "npx ts-node test-daily-reconciliation.ts",
     "export:user-records": "npx ts-node src/scripts/export-user-records.ts",
     "user-reconciliation": "npx ts-node src/scripts/user-reconciliation.ts",
     "compare-reconciliation": "npx ts-node src/scripts/compare-reconciliation.ts"

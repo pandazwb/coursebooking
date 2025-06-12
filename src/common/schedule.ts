@@ -792,24 +792,65 @@ https://test.xingxingzhihuo.com.cn/WebApi/getListOrderRecordTJ.aspx
 
 // 核账任务 - 每天晚上11点执行
 schedule.scheduleJob('0 23 * * *', withErrorHandling(async () => {
-    console.log(`\n=== 每日核账任务 ===`);
+    console.log(`\n=== 每日核账任务（准确核账） ===`);
     console.log('时间:', new Date().toLocaleString('zh-CN'));
     
+    const endDate = new Date().toISOString().split('T')[0];
+    const startDate = '2025-05-28'; // 运营开始日期
+    
     try {
+        // 1. 执行总账核账（使用accurate方法）
+        console.log('\n📊 开始执行总账核账...');
         const reconciliationService = ReconciliationService.getInstance();
-        const endDate = new Date().toISOString().split('T')[0];
-        const startDate = '2025-05-28'; // 运营开始日期
-        const result = await reconciliationService.performReconciliation(startDate, endDate);
+        const totalResult = await reconciliationService.performReconciliation(startDate, endDate);
         
-        if (!result.isBalanced) {
-            // 如果账目不平衡，发送告警邮件
-            await sendErrorNotification(
-                `账目不平衡！差额: ¥${result.difference.toFixed(2)}`,
-                '每日核账告警'
-            );
+        console.log(`总账核账结果: ${totalResult.isBalanced ? '平账' : '不平账'}`);
+        if (!totalResult.isBalanced) {
+            console.log(`总账差额: ¥${totalResult.difference.toFixed(2)}`);
         }
         
-        console.log('✅ 每日核账任务完成');
+        // 2. 执行用户核账（使用accurate方法）
+        console.log('\n👥 开始执行用户核账...');
+        const { UserReconciliationService } = await import('../services/user-reconciliation-service');
+        const userReconciliationService = UserReconciliationService.getInstance();
+        const userSummary = await userReconciliationService.reconcileAllUsers(startDate);
+        
+        console.log(`用户核账结果: ${userSummary.balancedUsers}/${userSummary.totalUsers} 用户平账 (${userSummary.accuracyRate.toFixed(1)}%)`);
+        
+        // 3. 汇总核账结果
+        console.log('\n📋 核账汇总:');
+        console.log(`总账: ${totalResult.isBalanced ? '✅ 平账' : '❌ 不平账'} (差额: ¥${totalResult.difference.toFixed(2)})`);
+        console.log(`用户账: ${userSummary.accuracyRate > 90 ? '✅ 良好' : '⚠️ 需关注'} (准确率: ${userSummary.accuracyRate.toFixed(1)}%)`);
+        
+        // 4. 发送告警邮件（如果需要）
+        const needAlert = !totalResult.isBalanced || userSummary.accuracyRate < 90 || userSummary.unbalancedUsers > 10;
+        
+        if (needAlert) {
+            const alertMessage = [
+                `每日核账告警 (${endDate})`,
+                '',
+                `📊 总账核账:`,
+                `   状态: ${totalResult.isBalanced ? '平账' : '不平账'}`,
+                `   差额: ¥${totalResult.difference.toFixed(2)}`,
+                `   销售额: ¥${totalResult.totalSalesAmount.toFixed(2)}`,
+                `   余额: ¥${totalResult.totalMemberBalance.toFixed(2)}`,
+                `   消费: ¥${totalResult.totalConsumption.toFixed(2)}`,
+                '',
+                `👥 用户核账:`,
+                `   总用户: ${userSummary.totalUsers}`,
+                `   平账用户: ${userSummary.balancedUsers}`,
+                `   不平账用户: ${userSummary.unbalancedUsers}`,
+                `   准确率: ${userSummary.accuracyRate.toFixed(1)}%`,
+                `   总差额: ¥${userSummary.totalDifference.toFixed(2)}`,
+                '',
+                `⚠️ 建议: ${!totalResult.isBalanced ? '检查总账数据同步' : ''}${userSummary.accuracyRate < 90 ? '核查用户账目异常' : ''}`
+            ].join('\n');
+            
+            await sendErrorNotification(alertMessage, '每日核账告警');
+        }
+        
+        console.log('\n✅ 每日核账任务完成');
+        
     } catch (error) {
         console.error('❌ 每日核账任务失败:', error);
         await sendErrorNotification(
@@ -817,9 +858,9 @@ schedule.scheduleJob('0 23 * * *', withErrorHandling(async () => {
             '核账任务错误'
         );
     }
-}, '每日核账任务'));
+}, '每日核账任务（准确核账）'));
 
-console.log(`📊 核账任务已启动: 每天晚上23:00执行`);
+console.log(`📊 准确核账任务已启动: 每天晚上23:00执行（总账+用户核账）`);
 
 // 添加用户上课记录导出功能
 import { userCourseRecordsService } from '../services/user-course-records';
