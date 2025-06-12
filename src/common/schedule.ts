@@ -797,7 +797,9 @@ schedule.scheduleJob('0 23 * * *', withErrorHandling(async () => {
     
     try {
         const reconciliationService = ReconciliationService.getInstance();
-        const result = await reconciliationService.performReconciliation();
+        const endDate = new Date().toISOString().split('T')[0];
+        const startDate = '2025-05-28'; // 运营开始日期
+        const result = await reconciliationService.performReconciliation(startDate, endDate);
         
         if (!result.isBalanced) {
             // 如果账目不平衡，发送告警邮件

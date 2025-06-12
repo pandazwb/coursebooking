@@ -51,7 +51,7 @@ class UserRecordsExporter {
             const currentDate = new Date().toISOString().split('T')[0];
             
             // 首先获取所有用户的基本信息
-            const reconciliationResult = await this.reconciliationService.performReconciliation(currentDate);
+            const reconciliationResult = await this.reconciliationService.performReconciliation(this.START_DATE, currentDate);
             
             console.log(`📋 获取到 ${reconciliationResult.details.memberBalances.length} 个用户的基本信息`);
             console.log('🔍 开始获取每个用户的详细充值记录...');

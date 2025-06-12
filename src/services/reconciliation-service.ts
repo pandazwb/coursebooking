@@ -29,24 +29,49 @@ interface MemberConsumptionData {
     MembersID: string;
 }
 
+// 新增：详细操作记录接口
+interface AdminHypeRecord {
+    HypeID: string;
+    Note: string;
+    Hypetype: string;      // "0"=充值/续卡, "2"=消课
+    MembersID: string;     // 会员卡ID
+    MembersvipID: string;  // 用户ID
+    Hypeinfo: string;      // 操作信息，包含金额："【本次金额】 为 480"、"【撤回金额】 为 94.00"
+    PayAmount: string;     // 支付金额
+    ID: string;
+    addTime: string;       // 操作时间
+    HypeName: string;      // 操作员名称
+}
+
+// 新增：用户准确消费数据
+interface MemberAccurateConsumption {
+    Name: string;
+    Phone: string;
+    MembersvipID: string;
+    totalConsumption: number;    // 准确的总消费金额
+    consumptionCount: number;    // 消费次数
+    cancelledAmount: number;     // 撤销金额
+    netConsumption: number;      // 净消费（消费-撤销）
+}
+
 interface ReconciliationResult {
-    date: string;
-    totalSales: number;           // 总销售额（售卡+续费）
-    totalBalance: number;         // 所有会员卡余额
-    totalConsumption: number;     // 所有会员已消费金额
-    calculatedTotal: number;      // 余额 + 已消费 = 应该等于总销售额
-    difference: number;           // 差额
-    isBalanced: boolean;          // 是否平账
+    startDate: string;
+    endDate: string;
+    totalSalesAmount: number;
+    totalMemberBalance: number;
+    totalConsumption: number;
+    difference: number;
+    isBalanced: boolean;
     details: {
         cardSales: CardTurnoverData[];
         memberBalances: MemberBalanceData[];
-        memberConsumptions: MemberConsumptionData[];
+        memberConsumptions: MemberConsumptionData[]; // 保留兼容性
+        accurateConsumptions: MemberAccurateConsumption[];
     };
     salesBreakdown?: {            // 销售额明细
-        salesAmount: number;      // 售卡金额
-        rechargeAmount: number;   // 续费金额
-        salesCount: number;       // 售卡笔数
-        rechargeCount: number;    // 续费笔数
+        cardSalesAmount: number;   // 售卡金额
+        renewalAmount: number;     // 续费金额
+        totalSalesAmount: number;  // 总销售额
     };
 }
 
@@ -208,89 +233,254 @@ export class ReconciliationService {
         }
     }
 
-    // 执行核账
-    public async performReconciliation(targetDate?: string): Promise<ReconciliationResult> {
-        const endDate = targetDate || new Date().toISOString().split('T')[0];
-        const startDate = this.OPERATION_START_DATE;
-
-        console.log(`\n🔍 开始核账: ${startDate} 至 ${endDate}`);
-        console.log('='.repeat(50));
-
+    // 新增：获取单个用户的详细操作记录
+    private async getUserAdminHypeRecords(membersvipID: string, startDate?: string): Promise<AdminHypeRecord[]> {
         try {
-            // 并行获取数据
-            const [cardSales, memberBalances, memberConsumptions] = await Promise.all([
-                this.getCardTurnover(startDate, endDate),
-                this.getAllMemberBalances(),
-                this.getMemberConsumptions(startDate, endDate)
-            ]);
+            const token = this.tokenManager.getToken();
+            let allRecords: AdminHypeRecord[] = [];
+            let currentPage = 1;
+            const pageSize = 100;
+            let hasMoreData = true;
 
-            // 计算总销售额（售卡金额 + 续费金额）
-            const totalSales = cardSales.reduce((sum, card) => {
-                return sum + card.allAmountsk + card.allAmountxf;
-            }, 0);
+            while (hasMoreData) {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-            // 计算所有会员卡余额
-            const totalBalance = memberBalances.reduce((sum, member) => {
-                return sum + parseFloat(member.Amount || '0');
-            }, 0);
+                const response = await fetch('https://test.xingxingzhihuo.com.cn/WebApi/getListAdminHype.aspx', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        "MembersvipID": membersvipID,
+                        "pages": currentPage,
+                        "psize": pageSize,
+                        "token": token
+                    }),
+                    signal: controller.signal
+                });
 
-            // 计算所有会员已消费金额
-            const totalConsumption = memberConsumptions.reduce((sum, member) => {
-                return sum + parseFloat(member.sumAmount || '0');
-            }, 0);
+                clearTimeout(timeoutId);
+                const data = await response.json();
 
-            // 计算应该的总额（余额 + 已消费）
-            const calculatedTotal = totalBalance + totalConsumption;
+                if (data.orsuccess === '1' && data.data) {
+                    let records = data.data;
+                    
+                    // 如果指定了开始日期，则过滤记录
+                    if (startDate) {
+                        records = records.filter((record: AdminHypeRecord) => {
+                            if (!record.addTime) return false;
+                            
+                            // 解析日期格式，支持 "2025/6/11 11:08:50" 格式
+                            const recordDate = new Date(record.addTime.replace(/\//g, '-'));
+                            const filterDate = new Date(startDate);
+                            
+                            return recordDate >= filterDate;
+                        });
+                    }
+                    
+                    allRecords.push(...records);
+                    
+                    // 如果返回的数据少于页面大小，说明已经是最后一页
+                    if (data.data.length < pageSize) {
+                        hasMoreData = false;
+                    } else {
+                        currentPage++;
+                    }
+                } else {
+                    console.error(`获取用户 ${membersvipID} 操作记录第${currentPage}页失败:`, data.Msg || '未知错误');
+                    hasMoreData = false;
+                }
 
-            // 计算差额
-            const difference = totalSales - calculatedTotal;
-            const isBalanced = Math.abs(difference) < 0.01; // 允许1分钱的误差
+                // 添加延迟避免请求过快
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+
+            return allRecords;
+        } catch (error) {
+            console.error(`获取用户 ${membersvipID} 操作记录出错:`, error);
+            return [];
+        }
+    }
+
+    // 新增：计算用户准确的消费金额
+    private calculateAccurateConsumption(records: AdminHypeRecord[], userName: string, userPhone: string, membersvipID: string): MemberAccurateConsumption {
+        let totalConsumption = 0;
+        let consumptionCount = 0;
+        let cancelledAmount = 0;
+
+        // 只处理消课类型的记录（Hypetype = "2"）
+        const consumptionRecords = records.filter(record => record.Hypetype === "2");
+
+        for (const record of consumptionRecords) {
+            // 从 Hypeinfo 中提取金额
+            const hypeinfo = record.Hypeinfo || '';
+            
+            // 匹配正常消课：【本次金额】 为 480
+            const consumptionMatch = hypeinfo.match(/【本次金额】\s*为\s*([\d.]+)/);
+            if (consumptionMatch) {
+                const amount = parseFloat(consumptionMatch[1]);
+                totalConsumption += amount;
+                consumptionCount++;
+                continue;
+            }
+
+            // 匹配撤销消课：【撤回金额】 为 94.00
+            const cancelMatch = hypeinfo.match(/【撤回金额】\s*为\s*([\d.]+)/);
+            if (cancelMatch) {
+                const amount = parseFloat(cancelMatch[1]);
+                cancelledAmount += amount;
+                continue;
+            }
+
+            // 备用方案：如果Hypeinfo解析失败，使用PayAmount
+            if (!consumptionMatch && !cancelMatch && record.PayAmount) {
+                const payAmount = parseFloat(record.PayAmount);
+                if (payAmount > 0) {
+                    totalConsumption += payAmount;
+                    consumptionCount++;
+                }
+            }
+        }
+
+        const netConsumption = totalConsumption - cancelledAmount;
+
+        return {
+            Name: userName,
+            Phone: userPhone,
+            MembersvipID: membersvipID,
+            totalConsumption,
+            consumptionCount,
+            cancelledAmount,
+            netConsumption
+        };
+    }
+
+    // 新增：获取所有用户的准确消费数据
+    private async getAllMemberAccurateConsumptions(memberBalances: MemberBalanceData[], startDate: string): Promise<MemberAccurateConsumption[]> {
+        console.log('🔍 开始获取所有用户的准确消费记录...');
+        
+        const accurateConsumptions: MemberAccurateConsumption[] = [];
+        let processedCount = 0;
+
+        for (const member of memberBalances) {
+            try {
+                // 获取用户的详细操作记录
+                const records = await this.getUserAdminHypeRecords(member.vid, startDate);
+                
+                // 计算准确的消费金额
+                const consumption = this.calculateAccurateConsumption(
+                    records, 
+                    member.Name, 
+                    member.Phone, 
+                    member.vid
+                );
+                
+                accurateConsumptions.push(consumption);
+                
+                processedCount++;
+                if (processedCount % 10 === 0) {
+                    console.log(`⏳ 已处理 ${processedCount}/${memberBalances.length} 个用户的消费记录`);
+                }
+
+            } catch (error) {
+                console.error(`处理用户 ${member.Name} (${member.Phone}) 的消费记录时出错:`, error);
+                
+                // 出错时创建一个空的消费记录
+                accurateConsumptions.push({
+                    Name: member.Name,
+                    Phone: member.Phone,
+                    MembersvipID: member.vid,
+                    totalConsumption: 0,
+                    consumptionCount: 0,
+                    cancelledAmount: 0,
+                    netConsumption: 0
+                });
+                processedCount++;
+            }
+        }
+
+        console.log(`✅ 完成所有用户消费记录处理，共 ${accurateConsumptions.length} 个用户`);
+        return accurateConsumptions;
+    }
+
+    // 执行核账
+    public async performReconciliation(startDate: string, endDate: string): Promise<ReconciliationResult> {
+        try {
+            console.log(`🔄 开始执行核账: ${startDate} 至 ${endDate}`);
+
+            // 获取售卡数据
+            console.log('📊 获取售卡数据...');
+            const cardSales = await this.getCardTurnover(startDate, endDate);
+
+            // 获取会员余额数据
+            console.log('👥 获取会员余额数据...');
+            const memberBalances = await this.getAllMemberBalances();
+
+            // 获取准确的会员消费数据（替代原有的聚合统计方法）
+            console.log('💰 获取准确的会员消费数据...');
+            const accurateConsumptions = await this.getAllMemberAccurateConsumptions(memberBalances, startDate);
+
+            // 计算总额
+            const totalSalesAmount = cardSales.reduce((sum, card) => sum + card.allAmountsk + card.allAmountxf, 0);
+            const totalMemberBalance = memberBalances.reduce((sum, member) => sum + parseFloat(member.Amount), 0);
+            const totalAccurateConsumption = accurateConsumptions.reduce((sum, consumption) => sum + consumption.netConsumption, 0);
+
+            // 核账计算：销售额 = 会员余额 + 消费金额
+            const difference = totalSalesAmount - (totalMemberBalance + totalAccurateConsumption);
+            const isBalanced = Math.abs(difference) < 0.01;
+
+            console.log('📋 核账汇总:');
+            console.log(`  总销售额: ¥${totalSalesAmount.toFixed(2)}`);
+            console.log(`  会员余额: ¥${totalMemberBalance.toFixed(2)}`);
+            console.log(`  准确消费: ¥${totalAccurateConsumption.toFixed(2)}`);
+            console.log(`  差额: ¥${difference.toFixed(2)} ${isBalanced ? '✅' : '❌'}`);
 
             const result: ReconciliationResult = {
-                date: endDate,
-                totalSales,
-                totalBalance,
-                totalConsumption,
-                calculatedTotal,
+                startDate,
+                endDate,
+                totalSalesAmount,
+                totalMemberBalance,
+                totalConsumption: totalAccurateConsumption,
                 difference,
                 isBalanced,
                 details: {
                     cardSales,
                     memberBalances,
-                    memberConsumptions
+                    memberConsumptions: [], // 保留兼容性
+                    accurateConsumptions   // 新增准确的消费数据
                 }
             };
 
-            // 输出核账结果
-            this.printReconciliationResult(result);
-
-            // 保存核账结果到文件
+            // 保存核账结果
             await this.saveReconciliationResult(result);
-
+            
+            console.log(`${isBalanced ? '✅' : '❌'} 核账完成`);
             return result;
+
         } catch (error) {
-            console.error('核账过程中出错:', error);
+            console.error('❌ 核账执行失败:', error);
             throw error;
         }
     }
 
     // 打印核账结果
     private printReconciliationResult(result: ReconciliationResult) {
-        console.log(`\n📊 核账结果 (${result.date})`);
+        console.log(`\n📊 核账结果 (${result.endDate})`);
         console.log('='.repeat(50));
         
         // 显示销售额明细
         if (result.salesBreakdown) {
-            console.log(`💰 售卡金额:     ¥${result.salesBreakdown.salesAmount.toFixed(2)} (${result.salesBreakdown.salesCount}笔)`);
-            console.log(`💰 续费金额:     ¥${result.salesBreakdown.rechargeAmount.toFixed(2)} (${result.salesBreakdown.rechargeCount}笔)`);
-            console.log(`💰 总销售额:     ¥${result.totalSales.toFixed(2)}`);
+            console.log(`💰 售卡金额:     ¥${result.salesBreakdown.cardSalesAmount.toFixed(2)} (${result.details.cardSales.length}笔)`);
+            console.log(`💰 续费金额:     ¥${result.salesBreakdown.renewalAmount.toFixed(2)} (${result.details.memberConsumptions.length}笔)`);
+            console.log(`💰 总销售额:     ¥${result.totalSalesAmount.toFixed(2)}`);
         } else {
-            console.log(`💰 总销售额:     ¥${result.totalSales.toFixed(2)}`);
+            console.log(`💰 总销售额:     ¥${result.totalSalesAmount.toFixed(2)}`);
         }
         
-        console.log(`💳 会员卡余额:   ¥${result.totalBalance.toFixed(2)}`);
+        console.log(`💳 会员卡余额:   ¥${result.totalMemberBalance.toFixed(2)}`);
         console.log(`🛒 已消费金额:   ¥${result.totalConsumption.toFixed(2)}`);
-        console.log(`🧮 计算总额:     ¥${result.calculatedTotal.toFixed(2)}`);
+        console.log(`🧮 计算总额:     ¥${result.totalMemberBalance.toFixed(2) + result.totalConsumption.toFixed(2)}`);
         console.log(`📈 差额:         ¥${result.difference.toFixed(2)}`);
         
         if (result.isBalanced) {
@@ -327,7 +517,7 @@ export class ReconciliationService {
                 fs.mkdirSync(logDir, { recursive: true });
             }
 
-            const fileName = `reconciliation_${result.date.replace(/-/g, '')}.json`;
+            const fileName = `reconciliation_${result.endDate.replace(/-/g, '')}.json`;
             const filePath = path.join(logDir, fileName);
 
             fs.writeFileSync(filePath, JSON.stringify(result, null, 2));
@@ -341,7 +531,7 @@ export class ReconciliationService {
     public async testReconciliation() {
         console.log('🧪 开始测试核账功能...');
         try {
-            const result = await this.performReconciliation();
+            const result = await this.performReconciliation('2025-05-28', new Date().toISOString().split('T')[0]);
             console.log('\n✅ 核账测试完成');
             return result;
         } catch (error) {

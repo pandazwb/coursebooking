@@ -48,8 +48,8 @@ export class PaymentReconciliationService {
         try {
             // 1. 获取系统销售数据
             console.log('📊 获取系统销售数据...');
-            const systemReconciliation = await this.reconciliationService.performReconciliation(endDate);
-            const systemSalesAmount = systemReconciliation.totalSales;
+            const systemReconciliation = await this.reconciliationService.performReconciliation(startDate, endDate);
+            const systemSalesAmount = systemReconciliation.totalSalesAmount;
 
             // 2. 获取收钱吧收款数据
             console.log('💰 获取收钱吧收款数据...');
