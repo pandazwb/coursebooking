@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>批量排课系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .controls {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+        
+        .controls h3 {
+            margin-bottom: 20px;
+            color: #2d3748;
+            font-size: 1.3rem;
+        }
+        
+        .control-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .control-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .control-item label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #4a5568;
+        }
+        
+        .control-item input,
+        .control-item select {
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .control-item input:focus,
+        .control-item select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(72, 187, 120, 0.3);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(245, 101, 101, 0.3);
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            margin-bottom: 25px;
+        }
+        
+        .table-header {
+            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .table-header h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        
+        .table-wrapper {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        
+        th, td {
+            padding: 15px 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        th {
+            background-color: #f7fafc;
+            font-weight: 600;
+            color: #2d3748;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        tbody tr:hover {
+            background-color: #f7fafc;
+            transition: background-color 0.2s ease;
+        }
+        
+        .row-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        
+        .row-input:focus {
+            outline: none;
+            border-color: #4299e1;
+            box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.1);
+        }
+        
+        .row-select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            font-size: 13px;
+            background-color: white;
+        }
+        
+        .row-select:focus {
+            outline: none;
+            border-color: #4299e1;
+            box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.1);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-pending {
+            background-color: #fed7d7;
+            color: #c53030;
+        }
+        
+        .status-success {
+            background-color: #c6f6d5;
+            color: #25543e;
+        }
+        
+        .status-error {
+            background-color: #fed7d7;
+            color: #c53030;
+        }
+        
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            background-color: #48bb78;
+        }
+        
+        .notification.error {
+            background-color: #f56565;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+        
+        .stat-number {
+            display: block;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #4299e1;
+            margin-bottom: 8px;
+        }
+        
+        .stat-label {
+            color: #718096;
+            font-weight: 600;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .control-group {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .table-wrapper {
+                font-size: 12px;
+            }
+            
+            th, td {
+                padding: 10px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎭 批量排课系统</h1>
+            <p>快速、便捷的课程批量安排工具</p>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <span class="stat-number" id="totalRows">0</span>
+                <span class="stat-label">排课计划</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="successCount">0</span>
+                <span class="stat-label">成功排课</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="errorCount">0</span>
+                <span class="stat-label">排课失败</span>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <h3>🛠️ 快速设置</h3>
+            <div class="control-group">
+                <div class="control-item">
+                    <label for="batchDate">日期</label>
+                    <input type="date" id="batchDate">
+                </div>
+                <div class="control-item">
+                    <label for="batchTime">时间</label>
+                    <input type="time" id="batchTime" value="08:00">
+                </div>
+                <div class="control-item">
+                    <label for="batchDuration">时长(分钟)</label>
+                    <select id="batchDuration">
+                        <option value="60">60分钟</option>
+                        <option value="90">90分钟</option>
+                        <option value="120">120分钟</option>
+                    </select>
+                </div>
+            </div>
+            <div class="control-group">
+                <div class="control-item">
+                    <label for="batchMaxCount">最大人数</label>
+                    <input type="number" id="batchMaxCount" value="9" min="1" max="20">
+                </div>
+                <div class="control-item">
+                    <label for="batchMinCount">最小人数</label>
+                    <input type="number" id="batchMinCount" value="3" min="1" max="20">
+                </div>
+                <div class="control-item">
+                    <label for="batchConsumption">消耗课时</label>
+                    <input type="number" id="batchConsumption" value="1" min="1" max="5">
+                </div>
+            </div>
+            <div style="margin-top: 15px;">
+                <button class="btn btn-primary" onclick="addRow()">➕ 添加排课</button>
+                <button class="btn btn-success" onclick="batchSubmit()">🚀 批量排课</button>
+                <button class="btn btn-danger" onclick="clearAll()">🗑️ 清空所有</button>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <div class="table-header">
+                <h3>📅 排课列表</h3>
+                <div>
+                    <button class="btn btn-primary btn-sm" onclick="loadData()">🔄 刷新数据</button>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table id="scheduleTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;">#</th>
+                            <th style="width: 120px;">日期</th>
+                            <th style="width: 100px;">时间</th>
+                            <th style="width: 200px;">课程</th>
+                            <th style="width: 150px;">老师</th>
+                            <th style="width: 120px;">教室</th>
+                            <th style="width: 80px;">时长</th>
+                            <th style="width: 80px;">最大</th>
+                            <th style="width: 80px;">最小</th>
+                            <th style="width: 80px;">课时</th>
+                            <th style="width: 80px;">价格</th>
+                            <th style="width: 100px;">状态</th>
+                            <th style="width: 120px;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scheduleTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 全局变量
+        let courses = [];
+        let teachers = [];
+        let sites = [];
+        let priceStrategy = {};
+        let scheduleData = [];
+        let rowCounter = 0;
+        
+        // API配置
+        const API_BASE = 'https://yuekeapi.xingxingzhihuo.com.cn/WebApi';
+        const STORES_ID = '1517';
+        const TOKEN = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJaSFlLIiwiZXhwIjoxNzQ5ODk5MTg3LCJzdWIiOiJKV1QiLCJhdWQiOiIxNDkwOSIsImlhdCI6IjIwMjUvNi8xMyAxOTowNjoyNyIsImRhdGEiOnsiTmFtZSI6IumSn-WFiOeUnyIsIklzZGlzYWJsZSI6MCwiUm9sZSI6IjAiLCJMaW1pdHMiOiIxLDIsMywzMSwzMiw0LDQxLDQyLDQzLDQ0LDUsNTEsNTIsNTMsNiw2MSw2Miw2Myw2NCw2NSw2Niw2Nyw2OCw2OSw2MDEsNjAyLDYwMyw3LDcxLDcyLDczLDc0LDc1LDgsODEsOSw5MSw5Miw5Myw5NCwxMCwxMDEsMTAyLDEwMywxMDQsMTEsMTExLDExMiwxMTMsMTE0LDExNSwyMSwyMiwyMywyNCwyNSwyNiwyNywxMDUsMjgsMTIsMTIxLDEyMiwxMjMsMTMsMTQsMTQxLDE0MiwxNSw2MDQsMzMsNjA1LDYwNiw2MDcsNjA4LDYwOSw2MTAsNjExLDYxMiw2MTMsNjE0LDYxNSw2MTYsNjE3LDYxOCw2MTksNjIwLDYyMSw2MDQxLDYwNDIsNjA0Myw2MDQ0LDYwNDUsMjksMjExLDIxMiwyMTMsMjE0LDE2LDE2MSwxNjIsMTYzLDE2NiwxNjcsMTY0LDYwNDYsNjA0Nyw2MDQ4LDYwNDksMjE1LDIxNiwxNjUsMjE3LDc4LDYwNTAsMjE4LDIxOSwyMTkwLDIxOTEsMjE5MiIsInVzZXJpZCI6IjE0OTA5IiwiU3RvcmVzSUQiOiIxNTE3IiwiSXNIZWFkT2ZmaWNlIjowLCJJc3RlciI6MX19.Yshjd4xFVKIZF7JhBafgG5jPD5fPhnGV-Nac6RhqtsE';
+        
+        // 价格策略配置
+        const PRICE_STRATEGIES = {
+            "60": [
+                { "amount": 0, "price": 135 },
+                { "amount": 1, "price": 135 },
+                { "amount": 2, "price": 135 },
+                { "amount": 3, "price": 135 },
+                { "amount": 4, "price": 130 },
+                { "amount": 5, "price": 125 },
+                { "amount": 6, "price": 120 },
+                { "amount": 7, "price": 115 },
+                { "amount": 8, "price": 110 },
+                { "amount": 9, "price": 105 }
+            ],
+            "90": [
+                { "amount": 0, "price": 202 },
+                { "amount": 1, "price": 202 },
+                { "amount": 2, "price": 202 },
+                { "amount": 3, "price": 202 },
+                { "amount": 4, "price": 195 },
+                { "amount": 5, "price": 187 },
+                { "amount": 6, "price": 180 },
+                { "amount": 7, "price": 172 },
+                { "amount": 8, "price": 165 },
+                { "amount": 9, "price": 157 }
+            ],
+            "120": [
+                { "amount": 0, "price": 270 },
+                { "amount": 1, "price": 270 },
+                { "amount": 2, "price": 270 },
+                { "amount": 3, "price": 270 },
+                { "amount": 4, "price": 260 },
+                { "amount": 5, "price": 250 },
+                { "amount": 6, "price": 240 },
+                { "amount": 7, "price": 230 },
+                { "amount": 8, "price": 220 },
+                { "amount": 9, "price": 210 }
+            ]
+        };
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 设置默认日期为今天
+            const today = new Date();
+            document.getElementById('batchDate').value = today.toISOString().split('T')[0];
+            
+            // 加载数据
+            loadData();
+        });
+        
+        // 显示通知
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => notification.classList.add('show'), 100);
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => document.body.removeChild(notification), 300);
+            }, 3000);
+        }
+        
+        // 加载基础数据
+        async function loadData() {
+            try {
+                showNotification('正在加载数据...', 'success');
+                
+                // 并行加载所有数据
+                const [coursesRes, teachersRes, sitesRes] = await Promise.all([
+                    fetch(`${API_BASE}/getlistCourse.aspx`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ StoresID: STORES_ID, token: TOKEN })
+                    }),
+                    fetch(`${API_BASE}/getSelectTeacher.aspx`, {
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ StoresID: STORES_ID, selectName: "", token: TOKEN })
+                    }),
+                    fetch(`${API_BASE}/getListSite.aspx`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ StoresID: STORES_ID, pages: 1, psize: 10000, token: TOKEN })
+                    })
+                ]);
+                
+                const coursesData = await coursesRes.json();
+                const teachersData = await teachersRes.json();
+                const sitesData = await sitesRes.json();
+                
+                if (coursesData.orsuccess === "1") {
+                    courses = coursesData.data;
+                }
+                
+                if (teachersData.orsuccess === "1") {
+                    teachers = teachersData.data;
+                }
+                
+                if (sitesData.orsuccess === "1") {
+                    sites = sitesData.data;
+                }
+                
+                showNotification(`数据加载完成: ${courses.length}个课程, ${teachers.length}位老师, ${sites.length}个教室`);
+                
+            } catch (error) {
+                console.error('加载数据失败:', error);
+                showNotification('数据加载失败，请检查网络连接', 'error');
+            }
+        }
+        
+        // 计算价格
+        function calculatePrice(duration, maxCount) {
+            const strategies = PRICE_STRATEGIES[duration.toString()];
+            if (!strategies) return 135; // 默认价格
+            
+            const strategy = strategies.find(s => s.amount <= maxCount) || strategies[strategies.length - 1];
+            return strategy.price;
+        }
+        
+        // 添加新行
+        function addRow() {
+            rowCounter++;
+            const tbody = document.getElementById('scheduleTableBody');
+            const row = document.createElement('tr');
+            row.id = `row-${rowCounter}`;
+            
+            const batchDate = document.getElementById('batchDate').value;
+            const batchTime = document.getElementById('batchTime').value;
+            const batchDuration = document.getElementById('batchDuration').value;
+            const batchMaxCount = document.getElementById('batchMaxCount').value;
+            const batchMinCount = document.getElementById('batchMinCount').value;
+            const batchConsumption = document.getElementById('batchConsumption').value;
+            
+            const price = calculatePrice(batchDuration, batchMaxCount);
+            
+            row.innerHTML = `
+                <td>${rowCounter}</td>
+                <td><input type="date" class="row-input" value="${batchDate}"></td>
+                <td><input type="time" class="row-input" value="${batchTime}"></td>
+                <td>
+                    <select class="row-select course-select">
+                        <option value="">选择课程</option>
+                        ${courses.map(c => `<option value="${c.ID}" data-name="${c.CourseName}">${c.CourseName}</option>`).join('')}
+                    </select>
+                </td>
+                <td>
+                    <select class="row-select teacher-select">
+                        <option value="">选择老师</option>
+                        ${teachers.map(t => `<option value="${t.ID}" data-name="${t.Name}">${t.Name}</option>`).join('')}
+                    </select>
+                </td>
+                <td>
+                    <select class="row-select site-select">
+                        <option value="">选择教室</option>
+                        ${sites.map(s => `<option value="${s.ID}" data-name="${s.SiteName}">${s.SiteName}</option>`).join('')}
+                    </select>
+                </td>
+                <td>
+                    <select class="row-select duration-select" onchange="updatePrice(this)">
+                        <option value="60" ${batchDuration === '60' ? 'selected' : ''}>60分钟</option>
+                        <option value="90" ${batchDuration === '90' ? 'selected' : ''}>90分钟</option>
+                        <option value="120" ${batchDuration === '120' ? 'selected' : ''}>120分钟</option>
+                    </select>
+                </td>
+                <td><input type="number" class="row-input max-count" value="${batchMaxCount}" min="1" max="20" onchange="updatePrice(this)"></td>
+                <td><input type="number" class="row-input min-count" value="${batchMinCount}" min="1" max="20"></td>
+                <td><input type="number" class="row-input consumption" value="${batchConsumption}" min="1" max="5"></td>
+                <td><span class="price">${price}</span></td>
+                <td><span class="status-indicator status-pending">待排课</span></td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn btn-success btn-sm" onclick="submitSingle(${rowCounter})">排课</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteRow(${rowCounter})">删除</button>
+                    </div>
+                </td>
+            `;
+            
+            tbody.appendChild(row);
+            updateStats();
+        }
+        
+        // 更新价格
+        function updatePrice(element) {
+            const row = element.closest('tr');
+            const duration = row.querySelector('.duration-select').value;
+            const maxCount = row.querySelector('.max-count').value;
+            const priceSpan = row.querySelector('.price');
+            
+            const price = calculatePrice(duration, maxCount);
+            priceSpan.textContent = price;
+        }
+        
+        // 删除行
+        function deleteRow(rowId) {
+            const row = document.getElementById(`row-${rowId}`);
+            if (row) {
+                row.remove();
+                updateStats();
+            }
+        }
+        
+        // 清空所有
+        function clearAll() {
+            if (confirm('确定要清空所有排课计划吗？')) {
+                document.getElementById('scheduleTableBody').innerHTML = '';
+                rowCounter = 0;
+                updateStats();
+            }
+        }
+        
+        // 更新统计
+        function updateStats() {
+            const rows = document.querySelectorAll('#scheduleTableBody tr');
+            const successRows = document.querySelectorAll('.status-success').length;
+            const errorRows = document.querySelectorAll('.status-error').length;
+            
+            document.getElementById('totalRows').textContent = rows.length;
+            document.getElementById('successCount').textContent = successRows;
+            document.getElementById('errorCount').textContent = errorRows;
+        }
+        
+        // 单个排课
+        async function submitSingle(rowId) {
+            const row = document.getElementById(`row-${rowId}`);
+            if (!row) return;
+            
+            const data = getRowData(row);
+            if (!validateRowData(data)) {
+                showNotification('请填写完整的排课信息', 'error');
+                return;
+            }
+            
+            const statusSpan = row.querySelector('.status-indicator');
+            const submitBtn = row.querySelector('.btn-success');
+            
+            try {
+                statusSpan.textContent = '排课中...';
+                statusSpan.className = 'status-indicator status-pending';
+                submitBtn.disabled = true;
+                submitBtn.textContent = '排课中...';
+                
+                const success = await submitSchedule(data);
+                
+                if (success) {
+                    statusSpan.textContent = '排课成功';
+                    statusSpan.className = 'status-indicator status-success';
+                    submitBtn.textContent = '已完成';
+                    showNotification('排课成功！');
+                } else {
+                    statusSpan.textContent = '排课失败';
+                    statusSpan.className = 'status-indicator status-error';
+                    submitBtn.textContent = '重试';
+                    submitBtn.disabled = false;
+                    showNotification('排课失败，请检查信息后重试', 'error');
+                }
+                
+            } catch (error) {
+                console.error('排课失败:', error);
+                statusSpan.textContent = '排课失败';
+                statusSpan.className = 'status-indicator status-error';
+                submitBtn.textContent = '重试';
+                submitBtn.disabled = false;
+                showNotification('排课失败，请检查网络连接', 'error');
+            }
+            
+            updateStats();
+        }
+        
+        // 批量排课
+        async function batchSubmit() {
+            const rows = document.querySelectorAll('#scheduleTableBody tr');
+            if (rows.length === 0) {
+                showNotification('请先添加排课计划', 'error');
+                return;
+            }
+            
+            if (!confirm(`确定要批量排课 ${rows.length} 个计划吗？`)) {
+                return;
+            }
+            
+            let successCount = 0;
+            let errorCount = 0;
+            
+            for (const row of rows) {
+                const statusSpan = row.querySelector('.status-indicator');
+                
+                // 跳过已成功的
+                if (statusSpan.classList.contains('status-success')) {
+                    successCount++;
+                    continue;
+                }
+                
+                const data = getRowData(row);
+                if (!validateRowData(data)) {
+                    errorCount++;
+                    statusSpan.textContent = '数据不完整';
+                    statusSpan.className = 'status-indicator status-error';
+                    continue;
+                }
+                
+                try {
+                    statusSpan.textContent = '排课中...';
+                    statusSpan.className = 'status-indicator status-pending';
+                    
+                    const success = await submitSchedule(data);
+                    
+                    if (success) {
+                        successCount++;
+                        statusSpan.textContent = '排课成功';
+                        statusSpan.className = 'status-indicator status-success';
+                    } else {
+                        errorCount++;
+                        statusSpan.textContent = '排课失败';
+                        statusSpan.className = 'status-indicator status-error';
+                    }
+                    
+                } catch (error) {
+                    errorCount++;
+                    statusSpan.textContent = '排课失败';
+                    statusSpan.className = 'status-indicator status-error';
+                }
+                
+                // 延迟避免请求过快
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+            updateStats();
+            showNotification(`批量排课完成：成功 ${successCount} 个，失败 ${errorCount} 个`);
+        }
+        
+        // 获取行数据
+        function getRowData(row) {
+            return {
+                date: row.querySelector('input[type="date"]').value,
+                time: row.querySelector('input[type="time"]').value,
+                courseId: row.querySelector('.course-select').value,
+                courseName: row.querySelector('.course-select option:checked').dataset.name || '',
+                teacherId: row.querySelector('.teacher-select').value,
+                teacherName: row.querySelector('.teacher-select option:checked').dataset.name || '',
+                siteId: row.querySelector('.site-select').value,
+                siteName: row.querySelector('.site-select option:checked').dataset.name || '',
+                duration: row.querySelector('.duration-select').value,
+                maxCount: row.querySelector('.max-count').value,
+                minCount: row.querySelector('.min-count').value,
+                consumption: row.querySelector('.consumption').value,
+                price: row.querySelector('.price').textContent
+            };
+        }
+        
+        // 验证行数据
+        function validateRowData(data) {
+            return data.date && data.time && data.courseId && data.teacherId && 
+                   data.siteId && data.duration && data.maxCount && data.minCount && data.consumption;
+        }
+        
+        // 提交排课
+        async function submitSchedule(data) {
+            const [year, month, day] = data.date.split('-');
+            const formattedDate = `${year}/${month}/${day}`;
+            const [hour, minute] = data.time.split(':');
+            
+            const payload = {
+                "Cycle": "1",
+                "StoresID": STORES_ID,
+                "LoginID": data.teacherId,
+                "CourseID": data.courseId,
+                "Timelength": data.duration,
+                "startTimes": formattedDate,
+                "endTimes": formattedDate,
+                "preAboutType": "2",
+                "limitCount": data.maxCount,
+                "MinCount": data.minCount,
+                "ConsumptionOfClass": data.consumption,
+                "startTime": data.time,
+                "PeriodOfTime": "1",
+                "LevelID": "1",
+                "AmemberCard": "23503",
+                "singlePrice": data.price,
+                "RowClassType": "0",
+                "ListRowClassTime": "[]",
+                "difficulty": "1",
+                "CourseName": data.courseName,
+                "integral": "0",
+                "shour": hour,
+                "sminute": minute,
+                "RowClassTypeqt": "1",
+                "payPrice": 0,
+                "IsPay": 0,
+                "RowType": "1",
+                "SiteID": data.siteId,
+                "SiteIDs": "",
+                "Site": "",
+                "SKtime": formattedDate,
+                "token": TOKEN
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}/addRowClass.aspx`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                return result.orsuccess === "1";
+                
+            } catch (error) {
+                console.error('排课请求失败:', error);
+                return false;
+            }
+        }
+    </script>
+</body>
+</html> 
