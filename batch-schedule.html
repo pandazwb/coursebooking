@@ -18,10 +18,104 @@
             color: #333;
         }
         
+        /* 登录界面样式 */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        
+        .login-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+        
+        .login-subtitle {
+            color: #718096;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 8px;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .login-error {
+            color: #f56565;
+            text-align: center;
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #fed7d7;
+            border-radius: 6px;
+            display: none;
+        }
+        
+        /* 主界面样式保持不变 */
         .container {
             max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
+            display: none; /* 初始隐藏 */
         }
         
         .header {
@@ -32,6 +126,25 @@
             margin-bottom: 30px;
             text-align: center;
             box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+            position: relative;
+        }
+        
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
         }
         
         .header h1 {
@@ -136,6 +249,16 @@
             box-shadow: 0 8px 25px rgba(245, 101, 101, 0.3);
         }
         
+        .btn-warning {
+            background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(237, 137, 54, 0.3);
+        }
+        
         .table-container {
             background: white;
             border-radius: 12px;
@@ -160,18 +283,41 @@
         
         .table-wrapper {
             overflow-x: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e0 #f7fafc;
+        }
+        
+        .table-wrapper::-webkit-scrollbar {
+            height: 8px;
+        }
+        
+        .table-wrapper::-webkit-scrollbar-track {
+            background: #f7fafc;
+            border-radius: 4px;
+        }
+        
+        .table-wrapper::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 4px;
+        }
+        
+        .table-wrapper::-webkit-scrollbar-thumb:hover {
+            background: #a0aec0;
         }
         
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 14px;
+            font-size: 13px;
+            min-width: 1200px;
         }
         
         th, td {
-            padding: 15px 12px;
+            padding: 8px 6px;
             text-align: left;
             border-bottom: 1px solid #e2e8f0;
+            font-size: 13px;
+            vertical-align: middle;
         }
         
         th {
@@ -181,6 +327,8 @@
             position: sticky;
             top: 0;
             z-index: 10;
+            font-size: 12px;
+            text-align: center;
         }
         
         tbody tr:hover {
@@ -190,10 +338,11 @@
         
         .row-input {
             width: 100%;
-            padding: 8px;
+            padding: 4px 6px;
             border: 1px solid #cbd5e0;
-            border-radius: 6px;
-            font-size: 13px;
+            border-radius: 4px;
+            font-size: 12px;
+            height: 26px;
         }
         
         .row-input:focus {
@@ -204,11 +353,12 @@
         
         .row-select {
             width: 100%;
-            padding: 8px;
+            padding: 4px 6px;
             border: 1px solid #cbd5e0;
-            border-radius: 6px;
-            font-size: 13px;
+            border-radius: 4px;
+            font-size: 12px;
             background-color: white;
+            height: 26px;
         }
         
         .row-select:focus {
@@ -219,20 +369,24 @@
         
         .action-buttons {
             display: flex;
-            gap: 8px;
+            gap: 4px;
+            flex-direction: column;
         }
         
         .btn-sm {
-            padding: 6px 12px;
-            font-size: 12px;
+            padding: 3px 8px;
+            font-size: 11px;
+            white-space: nowrap;
         }
         
         .status-indicator {
             display: inline-block;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 10px;
             font-weight: 600;
+            text-align: center;
+            white-space: nowrap;
         }
         
         .status-pending {
@@ -248,6 +402,38 @@
         .status-error {
             background-color: #fed7d7;
             color: #c53030;
+        }
+        
+        .difficulty-display {
+            font-size: 12px;
+            color: #f6ad55;
+            cursor: help;
+            text-align: center;
+            display: block;
+            font-weight: 600;
+        }
+        
+        .weekday-display {
+            font-size: 12px;
+            text-align: center;
+            margin-top: 4px;
+            font-weight: 600;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+        
+        .weekday-display.weekday {
+            color: #2d3748;
+            background-color: #e2e8f0;
+        }
+        
+        .weekday-display.weekend {
+            color: #e53e3e;
+            background-color: #fed7d7;
+        }
+        
+        .date-input {
+            margin-bottom: 4px !important;
         }
         
         .loading {
@@ -280,6 +466,10 @@
             background-color: #f56565;
         }
         
+        .notification.warning {
+            background-color: #ed8936;
+        }
+        
         .stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -308,13 +498,66 @@
             font-weight: 600;
         }
         
+        /* Token状态显示 */
+        .token-status {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .token-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .token-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        .token-indicator.valid {
+            background-color: #48bb78;
+        }
+        
+        .token-indicator.invalid {
+            background-color: #f56565;
+        }
+        
+        .token-indicator.refreshing {
+            background-color: #ed8936;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .token-text {
+            color: #2d3748;
+            font-weight: 600;
+        }
+        
+        .token-time {
+            color: #718096;
+            font-size: 0.9rem;
+        }
+        
         @media (max-width: 768px) {
             .container {
-                padding: 15px;
+                padding: 10px;
             }
             
             .header h1 {
-                font-size: 2rem;
+                font-size: 1.8rem;
             }
             
             .control-group {
@@ -323,20 +566,126 @@
             }
             
             .table-wrapper {
-                font-size: 12px;
+                font-size: 11px;
             }
             
             th, td {
-                padding: 10px 8px;
+                padding: 6px 4px;
+                font-size: 11px;
             }
+            
+            .row-input, .row-select {
+                font-size: 11px;
+                height: 24px;
+                padding: 2px 4px;
+            }
+            
+            .btn-sm {
+                padding: 2px 6px;
+                font-size: 10px;
+            }
+            
+            .status-indicator {
+                font-size: 9px;
+                padding: 1px 4px;
+            }
+            
+            .difficulty-display {
+                font-size: 10px;
+            }
+            
+            .weekday-display {
+                font-size: 10px;
+                padding: 1px 2px;
+            }
+            
+            .token-status {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            /* 表格列宽在移动端的调整 */
+            table {
+                min-width: 900px;
+            }
+            
+            th:nth-child(1) { width: 30px; }
+            th:nth-child(2) { width: 100px; }
+            th:nth-child(3) { width: 60px; }
+            th:nth-child(4) { width: 120px; }
+            th:nth-child(5) { width: 40px; }
+            th:nth-child(6) { width: 80px; }
+            th:nth-child(7) { width: 70px; }
+            th:nth-child(8) { width: 50px; }
+            th:nth-child(9) { width: 40px; }
+            th:nth-child(10) { width: 40px; }
+            th:nth-child(11) { width: 40px; }
+            th:nth-child(12) { width: 50px; }
+            th:nth-child(13) { width: 60px; }
+            th:nth-child(14) { width: 80px; }
+        }
+        
+        .price {
+            font-weight: 600;
+            color: #2d3748;
+            text-align: center;
+            display: block;
         }
     </style>
 </head>
 <body>
+    <!-- 登录界面 -->
+    <div class="login-container" id="loginContainer">
+        <div class="login-box">
+            <h1 class="login-title">🎭 批量排课系统</h1>
+            <p class="login-subtitle">请登录以继续使用</p>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginName">登录账号</label>
+                    <input type="text" id="loginName" name="loginName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="storesCode">门店代码</label>
+                    <input type="text" id="storesCode" name="storesCode" required placeholder="请输入门店代码">
+                </div>
+                
+                <button type="submit" class="login-btn" id="loginBtn">
+                    🔐 登录
+                </button>
+                
+                <div class="login-error" id="loginError"></div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 主界面 -->
     <div class="container">
         <div class="header">
+            <button class="logout-btn" onclick="logout()">🚪 退出登录</button>
             <h1>🎭 批量排课系统</h1>
             <p>快速、便捷的课程批量安排工具</p>
+        </div>
+        
+        <!-- Token状态显示 -->
+        <div class="token-status">
+            <div class="token-info">
+                <div class="token-indicator invalid" id="tokenIndicator"></div>
+                <div>
+                    <div class="token-text" id="tokenStatus">Token状态检查中...</div>
+                    <div class="token-time" id="tokenTime">正在获取Token信息...</div>
+                </div>
+            </div>
+            <div>
+                <button class="btn btn-warning btn-sm" onclick="refreshToken()" id="refreshTokenBtn">🔄 刷新Token</button>
+            </div>
         </div>
         
         <div class="stats">
@@ -359,7 +708,8 @@
             <div class="control-group">
                 <div class="control-item">
                     <label for="batchDate">日期</label>
-                    <input type="date" id="batchDate">
+                    <input type="date" id="batchDate" onchange="updateBatchWeekday()">
+                    <div class="weekday-display" id="batchWeekday"></div>
                 </div>
                 <div class="control-item">
                     <label for="batchTime">时间</label>
@@ -367,7 +717,7 @@
                 </div>
                 <div class="control-item">
                     <label for="batchDuration">时长(分钟)</label>
-                    <select id="batchDuration">
+                    <select id="batchDuration" onchange="updateBatchConsumption()">
                         <option value="60">60分钟</option>
                         <option value="90">90分钟</option>
                         <option value="120">120分钟</option>
@@ -385,7 +735,7 @@
                 </div>
                 <div class="control-item">
                     <label for="batchConsumption">消耗课时</label>
-                    <input type="number" id="batchConsumption" value="1" min="1" max="5">
+                    <input type="number" id="batchConsumption" value="1" min="0.5" max="5" step="0.5">
                 </div>
             </div>
             <div style="margin-top: 15px;">
@@ -406,19 +756,20 @@
                 <table id="scheduleTable">
                     <thead>
                         <tr>
-                            <th style="width: 40px;">#</th>
-                            <th style="width: 120px;">日期</th>
-                            <th style="width: 100px;">时间</th>
-                            <th style="width: 200px;">课程</th>
-                            <th style="width: 150px;">老师</th>
-                            <th style="width: 120px;">教室</th>
-                            <th style="width: 80px;">时长</th>
-                            <th style="width: 80px;">最大</th>
-                            <th style="width: 80px;">最小</th>
-                            <th style="width: 80px;">课时</th>
-                            <th style="width: 80px;">价格</th>
-                            <th style="width: 100px;">状态</th>
-                            <th style="width: 120px;">操作</th>
+                            <th style="width: 35px;">#</th>
+                            <th style="width: 120px;">日期/星期</th>
+                            <th style="width: 80px;">时间</th>
+                            <th style="width: 160px;">课程</th>
+                            <th style="width: 50px;">难度</th>
+                            <th style="width: 120px;">老师</th>
+                            <th style="width: 100px;">教室</th>
+                            <th style="width: 70px;">时长</th>
+                            <th style="width: 50px;">最大</th>
+                            <th style="width: 50px;">最小</th>
+                            <th style="width: 50px;">课时</th>
+                            <th style="width: 70px;">价格</th>
+                            <th style="width: 80px;">状态</th>
+                            <th style="width: 100px;">操作</th>
                         </tr>
                     </thead>
                     <tbody id="scheduleTableBody">
@@ -436,11 +787,13 @@
         let priceStrategy = {};
         let scheduleData = [];
         let rowCounter = 0;
+        let currentToken = '';
+        let userInfo = {}; // 存储用户登录信息
         
         // API配置
         const API_BASE = 'https://yuekeapi.xingxingzhihuo.com.cn/WebApi';
+        const LOGIN_API = 'https://yuekeapi.xingxingzhihuo.com.cn/WebApi/Login.aspx';
         const STORES_ID = '1517';
-        const TOKEN = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJaSFlLIiwiZXhwIjoxNzQ5ODk5MTg3LCJzdWIiOiJKV1QiLCJhdWQiOiIxNDkwOSIsImlhdCI6IjIwMjUvNi8xMyAxOTowNjoyNyIsImRhdGEiOnsiTmFtZSI6IumSn-WFiOeUnyIsIklzZGlzYWJsZSI6MCwiUm9sZSI6IjAiLCJMaW1pdHMiOiIxLDIsMywzMSwzMiw0LDQxLDQyLDQzLDQ0LDUsNTEsNTIsNTMsNiw2MSw2Miw2Myw2NCw2NSw2Niw2Nyw2OCw2OSw2MDEsNjAyLDYwMyw3LDcxLDcyLDczLDc0LDc1LDgsODEsOSw5MSw5Miw5Myw5NCwxMCwxMDEsMTAyLDEwMywxMDQsMTEsMTExLDExMiwxMTMsMTE0LDExNSwyMSwyMiwyMywyNCwyNSwyNiwyNywxMDUsMjgsMTIsMTIxLDEyMiwxMjMsMTMsMTQsMTQxLDE0MiwxNSw2MDQsMzMsNjA1LDYwNiw2MDcsNjA4LDYwOSw2MTAsNjExLDYxMiw2MTMsNjE0LDYxNSw2MTYsNjE3LDYxOCw2MTksNjIwLDYyMSw2MDQxLDYwNDIsNjA0Myw2MDQ0LDYwNDUsMjksMjExLDIxMiwyMTMsMjE0LDE2LDE2MSwxNjIsMTYzLDE2NiwxNjcsMTY0LDYwNDYsNjA0Nyw2MDQ4LDYwNDksMjE1LDIxNiwxNjUsMjE3LDc4LDYwNTAsMjE4LDIxOSwyMTkwLDIxOTEsMjE5MiIsInVzZXJpZCI6IjE0OTA5IiwiU3RvcmVzSUQiOiIxNTE3IiwiSXNIZWFkT2ZmaWNlIjowLCJJc3RlciI6MX19.Yshjd4xFVKIZF7JhBafgG5jPD5fPhnGV-Nac6RhqtsE';
         
         // 价格策略配置
         const PRICE_STRATEGIES = {
@@ -488,9 +841,324 @@
             const today = new Date();
             document.getElementById('batchDate').value = today.toISOString().split('T')[0];
             
-            // 加载数据
-            loadData();
+            // 立即更新星期几显示
+            updateBatchWeekday();
+            
+            // 初始化登录表单
+            initializeLogin();
         });
+        
+        // 初始化登录
+        function initializeLogin() {
+            const loginForm = document.getElementById('loginForm');
+            loginForm.addEventListener('submit', handleLogin);
+            
+            // 预填充登录信息（可选，用于开发测试）
+            document.getElementById('loginName').value = '17316439430';
+            document.getElementById('password').value = '19880702@zwb';
+            document.getElementById('storesCode').value = 'Z9430';
+        }
+        
+        // 处理登录
+        async function handleLogin(event) {
+            event.preventDefault();
+            
+            const loginBtn = document.getElementById('loginBtn');
+            const loginError = document.getElementById('loginError');
+            
+            // 获取表单数据
+            const formData = new FormData(event.target);
+            userInfo = {
+                LoginName: formData.get('loginName'),
+                Pwd: formData.get('password'),
+                StoresCode: formData.get('storesCode')
+            };
+            
+            try {
+                // 显示登录中状态
+                loginBtn.disabled = true;
+                loginBtn.textContent = '🔄 登录中...';
+                loginError.style.display = 'none';
+                
+                // 调用登录API
+                const response = await fetch(LOGIN_API, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(userInfo)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP错误: ${response.status} ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.orsuccess === '1' && data.token) {
+                    // 登录成功
+                    currentToken = data.token;
+                    
+                    // 显示主界面，隐藏登录界面
+                    document.getElementById('loginContainer').style.display = 'none';
+                    document.querySelector('.container').style.display = 'block';
+                    
+                    // 初始化系统
+                    await initializeSystem();
+                    
+                } else {
+                    // 登录失败
+                    const errorMsg = data.Msg || '登录失败，请检查登录信息';
+                    showLoginError(errorMsg);
+                }
+                
+            } catch (error) {
+                console.error('登录失败:', error);
+                showLoginError('登录失败，请检查网络连接或登录信息');
+            } finally {
+                // 恢复按钮状态
+                loginBtn.disabled = false;
+                loginBtn.textContent = '🔐 登录';
+            }
+        }
+        
+        // 显示登录错误
+        function showLoginError(message) {
+            const loginError = document.getElementById('loginError');
+            loginError.textContent = message;
+            loginError.style.display = 'block';
+        }
+        
+        // 退出登录
+        function logout() {
+            if (confirm('确定要退出登录吗？')) {
+                currentToken = '';
+                userInfo = {};
+                
+                // 清空数据
+                courses = [];
+                teachers = [];
+                sites = [];
+                scheduleData = [];
+                rowCounter = 0;
+                document.getElementById('scheduleTableBody').innerHTML = '';
+                updateStats();
+                
+                // 显示登录界面，隐藏主界面
+                document.querySelector('.container').style.display = 'none';
+                document.getElementById('loginContainer').style.display = 'flex';
+                
+                // 清空登录错误信息
+                document.getElementById('loginError').style.display = 'none';
+            }
+        }
+        
+        // 系统初始化（登录成功后调用）
+        async function initializeSystem() {
+            try {
+                updateTokenStatus('valid', 'Token已获取', '登录成功，正在加载数据...');
+                
+                // 加载基础数据
+                await loadData();
+                
+                // 更新Token状态显示
+                const expirationTime = getTokenExpirationTime(currentToken);
+                const expirationText = expirationTime 
+                    ? `过期时间: ${expirationTime.toLocaleString('zh-CN')}`
+                    : '过期时间: 未知';
+                
+                updateTokenStatus('valid', 'Token有效', expirationText);
+                
+            } catch (error) {
+                console.error('系统初始化失败:', error);
+                updateTokenStatus('invalid', 'Token获取失败', '系统初始化出错');
+                showNotification('系统初始化失败', 'error');
+            }
+        }
+        
+        // 更新Token状态显示
+        function updateTokenStatus(status, statusText, timeText) {
+            const indicator = document.getElementById('tokenIndicator');
+            const statusElement = document.getElementById('tokenStatus');
+            const timeElement = document.getElementById('tokenTime');
+            const refreshBtn = document.getElementById('refreshTokenBtn');
+            
+            // 清除所有状态类
+            indicator.className = 'token-indicator';
+            indicator.classList.add(status);
+            
+            statusElement.textContent = statusText;
+            timeElement.textContent = timeText;
+            
+            // 更新按钮状态
+            if (status === 'refreshing') {
+                refreshBtn.disabled = true;
+                refreshBtn.textContent = '🔄 刷新中...';
+            } else {
+                refreshBtn.disabled = false;
+                refreshBtn.textContent = '🔄 刷新Token';
+            }
+        }
+        
+        // 检查Token是否即将过期
+        function isTokenExpiringSoon(token) {
+            try {
+                if (!token) return true;
+                
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                if (!payload.exp) return true;
+                
+                const expirationTime = payload.exp * 1000;
+                const currentTime = Date.now();
+                const oneHourInMs = 60 * 60 * 1000;
+                
+                return (expirationTime - currentTime) < oneHourInMs;
+            } catch (error) {
+                console.error('检查Token过期时间失败:', error);
+                return true;
+            }
+        }
+        
+        // 获取Token过期时间
+        function getTokenExpirationTime(token) {
+            try {
+                if (!token) return null;
+                
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                if (!payload.exp) return null;
+                
+                return new Date(payload.exp * 1000);
+            } catch (error) {
+                console.error('解析Token过期时间失败:', error);
+                return null;
+            }
+        }
+        
+        // 刷新Token（使用存储的用户信息）
+        async function refreshToken(showNotif = true) {
+            try {
+                if (!userInfo.LoginName) {
+                    throw new Error('用户信息缺失，请重新登录');
+                }
+                
+                if (showNotif) {
+                    updateTokenStatus('refreshing', 'Token刷新中...', '正在获取新的Token...');
+                }
+                
+                const response = await fetch(LOGIN_API, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(userInfo)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP错误: ${response.status} ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.orsuccess === '1' && data.token) {
+                    currentToken = data.token;
+                    
+                    const expirationTime = getTokenExpirationTime(currentToken);
+                    const expirationText = expirationTime 
+                        ? `过期时间: ${expirationTime.toLocaleString('zh-CN')}`
+                        : '过期时间: 未知';
+                    
+                    updateTokenStatus('valid', 'Token有效', expirationText);
+                    
+                    if (showNotif) {
+                        showNotification('Token刷新成功！');
+                    }
+                    
+                    return true;
+                } else {
+                    const errorMsg = data.Msg || '未知错误';
+                    updateTokenStatus('invalid', 'Token刷新失败', `错误: ${errorMsg}`);
+                    
+                    if (showNotif) {
+                        showNotification(`Token刷新失败: ${errorMsg}`, 'error');
+                    }
+                    
+                    return false;
+                }
+            } catch (error) {
+                console.error('Token刷新失败:', error);
+                updateTokenStatus('invalid', 'Token刷新失败', '网络错误或服务器异常');
+                
+                if (showNotif) {
+                    showNotification('Token刷新失败，请检查网络连接', 'error');
+                }
+                
+                return false;
+            }
+        }
+        
+        // 验证Token有效性
+        async function validateToken() {
+            if (!currentToken) {
+                return false;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/getlistCourse.aspx`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ StoresID: STORES_ID, token: currentToken })
+                });
+                
+                const data = await response.json();
+                
+                if (data.orsuccess === '-99' || data.orsuccess === -99) {
+                    return false;
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('Token验证失败:', error);
+                return false;
+            }
+        }
+        
+        // 带Token自动刷新的API调用
+        async function apiCallWithTokenRefresh(url, payload, retryCount = 1) {
+            try {
+                // 检查Token是否即将过期
+                if (isTokenExpiringSoon(currentToken)) {
+                    console.log('Token即将过期，自动刷新...');
+                    await refreshToken(false);
+                }
+                
+                // 更新payload中的token
+                payload.token = currentToken;
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+                
+                // 检查是否Token无效
+                if ((data.orsuccess === '-99' || data.orsuccess === -99) && retryCount > 0) {
+                    console.log('Token无效，尝试刷新后重试...');
+                    const refreshed = await refreshToken(false);
+                    
+                    if (refreshed) {
+                        // 递归重试
+                        return await apiCallWithTokenRefresh(url, payload, retryCount - 1);
+                    }
+                }
+                
+                return data;
+            } catch (error) {
+                console.error('API调用失败:', error);
+                throw error;
+            }
+        }
         
         // 显示通知
         function showNotification(message, type = 'success') {
@@ -511,31 +1179,17 @@
             try {
                 showNotification('正在加载数据...', 'success');
                 
-                // 并行加载所有数据
-                const [coursesRes, teachersRes, sitesRes] = await Promise.all([
-                    fetch(`${API_BASE}/getlistCourse.aspx`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ StoresID: STORES_ID, token: TOKEN })
-                    }),
-                    fetch(`${API_BASE}/getSelectTeacher.aspx`, {
-                        method: 'POST', 
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ StoresID: STORES_ID, selectName: "", token: TOKEN })
-                    }),
-                    fetch(`${API_BASE}/getListSite.aspx`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ StoresID: STORES_ID, pages: 1, psize: 10000, token: TOKEN })
-                    })
+                // 并行加载所有数据，使用带Token刷新的API调用
+                const [coursesData, teachersData, sitesData] = await Promise.all([
+                    apiCallWithTokenRefresh(`${API_BASE}/getlistCourse.aspx`, { StoresID: STORES_ID }),
+                    apiCallWithTokenRefresh(`${API_BASE}/getSelectTeacher.aspx`, { StoresID: STORES_ID, selectName: "" }),
+                    apiCallWithTokenRefresh(`${API_BASE}/getListSite.aspx`, { StoresID: STORES_ID, pages: 1, psize: 10000 })
                 ]);
-                
-                const coursesData = await coursesRes.json();
-                const teachersData = await teachersRes.json();
-                const sitesData = await sitesRes.json();
                 
                 if (coursesData.orsuccess === "1") {
                     courses = coursesData.data;
+                    // 调试：输出课程数据结构
+                    console.log('课程数据结构:', courses.length > 0 ? courses[0] : '无课程数据');
                 }
                 
                 if (teachersData.orsuccess === "1") {
@@ -581,14 +1235,22 @@
             
             row.innerHTML = `
                 <td>${rowCounter}</td>
-                <td><input type="date" class="row-input" value="${batchDate}"></td>
+                <td>
+                    <input type="date" class="row-input date-input" value="${batchDate}" onchange="updateWeekday(this)">
+                    <div class="weekday-display"></div>
+                </td>
                 <td><input type="time" class="row-input" value="${batchTime}"></td>
                 <td>
-                    <select class="row-select course-select">
+                    <select class="row-select course-select" onchange="updateCourseDifficulty(this)">
                         <option value="">选择课程</option>
-                        ${courses.map(c => `<option value="${c.ID}" data-name="${c.CourseName}">${c.CourseName}</option>`).join('')}
+                        ${courses.map(c => {
+                            // 尝试多个可能的难度字段名称
+                            const difficulty = c.difficulty || c.Difficulty || c.level || c.Level || c.star || c.Star || '1';
+                            return `<option value="${c.ID}" data-name="${c.CourseName}" data-difficulty="${difficulty}">${c.CourseName}</option>`;
+                        }).join('')}
                     </select>
                 </td>
+                <td><span class="difficulty-display">-</span></td>
                 <td>
                     <select class="row-select teacher-select">
                         <option value="">选择老师</option>
@@ -596,7 +1258,7 @@
                     </select>
                 </td>
                 <td>
-                    <select class="row-select site-select">
+                    <select class="row-select site-select" onchange="handleSiteChange(this)">
                         <option value="">选择教室</option>
                         ${sites.map(s => `<option value="${s.ID}" data-name="${s.SiteName}">${s.SiteName}</option>`).join('')}
                     </select>
@@ -610,7 +1272,7 @@
                 </td>
                 <td><input type="number" class="row-input max-count" value="${batchMaxCount}" min="1" max="20" onchange="updatePrice(this)"></td>
                 <td><input type="number" class="row-input min-count" value="${batchMinCount}" min="1" max="20"></td>
-                <td><input type="number" class="row-input consumption" value="${batchConsumption}" min="1" max="5"></td>
+                <td><input type="number" class="row-input consumption" value="${batchConsumption}" min="0.5" max="5" step="0.5"></td>
                 <td><span class="price">${price}</span></td>
                 <td><span class="status-indicator status-pending">待排课</span></td>
                 <td>
@@ -622,6 +1284,13 @@
             `;
             
             tbody.appendChild(row);
+            
+            // 立即更新星期几显示
+            const dateInput = row.querySelector('.date-input');
+            if (dateInput.value) {
+                updateWeekday(dateInput);
+            }
+            
             updateStats();
         }
         
@@ -631,9 +1300,130 @@
             const duration = row.querySelector('.duration-select').value;
             const maxCount = row.querySelector('.max-count').value;
             const priceSpan = row.querySelector('.price');
+            const consumptionInput = row.querySelector('.consumption');
+            
+            // 根据时长自动设置消耗课时
+            if (element.classList.contains('duration-select')) {
+                let consumption = 1; // 默认值
+                switch(duration) {
+                    case '60':
+                        consumption = 1;
+                        break;
+                    case '90':
+                        consumption = 1.5;
+                        break;
+                    case '120':
+                        consumption = 2;
+                        break;
+                }
+                consumptionInput.value = consumption;
+            }
             
             const price = calculatePrice(duration, maxCount);
             priceSpan.textContent = price;
+        }
+        
+        // 处理教室选择变化
+        function handleSiteChange(element) {
+            const row = element.closest('tr');
+            const selectedOption = element.options[element.selectedIndex];
+            const siteName = selectedOption.dataset.name;
+            const maxCountInput = row.querySelector('.max-count');
+            
+            // 如果选择的是"2教"，自动设置最大人数为8
+            if (siteName && siteName.includes('2教')) {
+                maxCountInput.value = 8;
+                // 重新计算价格
+                updatePrice(maxCountInput);
+            }
+        }
+        
+        // 更新快速设置中的消耗课时
+        function updateBatchConsumption() {
+            const duration = document.getElementById('batchDuration').value;
+            const consumptionInput = document.getElementById('batchConsumption');
+            
+            let consumption = 1; // 默认值
+            switch(duration) {
+                case '60':
+                    consumption = 1;
+                    break;
+                case '90':
+                    consumption = 1.5;
+                    break;
+                case '120':
+                    consumption = 2;
+                    break;
+            }
+            consumptionInput.value = consumption;
+        }
+        
+        // 更新课程难度显示
+        function updateCourseDifficulty(element) {
+            const row = element.closest('tr');
+            const selectedOption = element.options[element.selectedIndex];
+            const difficulty = selectedOption.dataset.difficulty || '1';
+            const difficultyDisplay = row.querySelector('.difficulty-display');
+            
+            if (element.value) {
+                // 显示星级难度
+                const stars = '★'.repeat(parseInt(difficulty)) + '☆'.repeat(5 - parseInt(difficulty));
+                difficultyDisplay.textContent = stars;
+                difficultyDisplay.title = `难度: ${difficulty}星`;
+            } else {
+                difficultyDisplay.textContent = '-';
+                difficultyDisplay.title = '';
+            }
+        }
+        
+        // 更新星期几显示
+        function updateWeekday(element) {
+            const row = element.closest('tr');
+            const weekdayDisplay = row.querySelector('.weekday-display');
+            const dateValue = element.value;
+            
+            if (dateValue) {
+                const date = new Date(dateValue);
+                const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+                const weekday = weekdays[date.getDay()];
+                weekdayDisplay.textContent = weekday;
+                
+                // 根据星期几设置不同颜色
+                weekdayDisplay.className = 'weekday-display';
+                if (date.getDay() === 0 || date.getDay() === 6) {
+                    weekdayDisplay.classList.add('weekend');
+                } else {
+                    weekdayDisplay.classList.add('weekday');
+                }
+            } else {
+                weekdayDisplay.textContent = '';
+                weekdayDisplay.className = 'weekday-display';
+            }
+        }
+        
+        // 更新快速设置中的星期几显示
+        function updateBatchWeekday() {
+            const dateInput = document.getElementById('batchDate');
+            const weekdayDisplay = document.getElementById('batchWeekday');
+            const dateValue = dateInput.value;
+            
+            if (dateValue) {
+                const date = new Date(dateValue);
+                const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+                const weekday = weekdays[date.getDay()];
+                weekdayDisplay.textContent = weekday;
+                
+                // 根据星期几设置不同颜色
+                weekdayDisplay.className = 'weekday-display';
+                if (date.getDay() === 0 || date.getDay() === 6) {
+                    weekdayDisplay.classList.add('weekend');
+                } else {
+                    weekdayDisplay.classList.add('weekday');
+                }
+            } else {
+                weekdayDisplay.textContent = '';
+                weekdayDisplay.className = 'weekday-display';
+            }
         }
         
         // 删除行
@@ -776,11 +1566,15 @@
         
         // 获取行数据
         function getRowData(row) {
+            const courseSelect = row.querySelector('.course-select');
+            const selectedCourseOption = courseSelect.options[courseSelect.selectedIndex];
+            
             return {
-                date: row.querySelector('input[type="date"]').value,
+                date: row.querySelector('.date-input').value,
                 time: row.querySelector('input[type="time"]').value,
-                courseId: row.querySelector('.course-select').value,
-                courseName: row.querySelector('.course-select option:checked').dataset.name || '',
+                courseId: courseSelect.value,
+                courseName: selectedCourseOption.dataset.name || '',
+                courseDifficulty: selectedCourseOption.dataset.difficulty || '1',
                 teacherId: row.querySelector('.teacher-select').value,
                 teacherName: row.querySelector('.teacher-select option:checked').dataset.name || '',
                 siteId: row.querySelector('.site-select').value,
@@ -824,7 +1618,7 @@
                 "singlePrice": data.price,
                 "RowClassType": "0",
                 "ListRowClassTime": "[]",
-                "difficulty": "1",
+                "difficulty": data.courseDifficulty,
                 "CourseName": data.courseName,
                 "integral": "0",
                 "shour": hour,
@@ -836,18 +1630,11 @@
                 "SiteID": data.siteId,
                 "SiteIDs": "",
                 "Site": "",
-                "SKtime": formattedDate,
-                "token": TOKEN
+                "SKtime": formattedDate
             };
             
             try {
-                const response = await fetch(`${API_BASE}/addRowClass.aspx`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                
-                const result = await response.json();
+                const result = await apiCallWithTokenRefresh(`${API_BASE}/addRowClass.aspx`, payload);
                 return result.orsuccess === "1";
                 
             } catch (error) {
@@ -855,6 +1642,14 @@
                 return false;
             }
         }
+        
+        // 定期检查Token状态（每5分钟检查一次）
+        setInterval(async () => {
+            if (currentToken && isTokenExpiringSoon(currentToken)) {
+                console.log('Token即将过期，自动刷新...');
+                await refreshToken(false);
+            }
+        }, 5 * 60 * 1000); // 5分钟
     </script>
 </body>
 </html> 
