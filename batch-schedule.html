@@ -632,6 +632,79 @@
             text-align: center;
             display: block;
         }
+        
+        /* 可搜索下拉框样式 */
+        .searchable-select {
+            position: relative;
+        }
+        
+        .searchable-select input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .searchable-select input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .dropdown-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .dropdown-list.show {
+            display: block;
+        }
+        
+        .dropdown-item {
+            padding: 10px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #f7fafc;
+            transition: background-color 0.2s ease;
+        }
+        
+        .dropdown-item:hover {
+            background-color: #f7fafc;
+        }
+        
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+        
+        .dropdown-item.selected {
+            background-color: #667eea;
+            color: white;
+        }
+        
+        .dropdown-item.hidden {
+            display: none;
+        }
+        
+        .dropdown-item.learning-match {
+            background-color: #fff5f5;
+            border-left: 3px solid #f56565;
+            font-weight: 600;
+        }
+        
+        .dropdown-item.learning-match:hover {
+            background-color: #fed7d7;
+        }
     </style>
 </head>
 <body>
@@ -726,6 +799,38 @@
             </div>
             <div class="control-group">
                 <div class="control-item">
+                    <label for="batchCourse">课程</label>
+                    <div class="searchable-select">
+                        <input type="text" id="batchCourseSearch" placeholder="搜索课程..." onkeyup="filterCourses(this.value)" onfocus="showCourseDropdown()" onblur="hideCourseDropdown()">
+                        <div class="dropdown-list" id="batchCourseDropdown">
+                            <div class="dropdown-item" data-value="" data-name="" data-difficulty="1">选择课程</div>
+                        </div>
+                        <input type="hidden" id="batchCourse" value="">
+                        <input type="hidden" id="batchCourseName" value="">
+                        <input type="hidden" id="batchCourseDifficulty" value="1">
+                    </div>
+                </div>
+                <div class="control-item">
+                    <label for="batchTeacher">老师</label>
+                    <div class="searchable-select">
+                        <input type="text" id="batchTeacherSearch" placeholder="搜索老师..." onkeyup="filterTeachers(this.value)" onfocus="showTeacherDropdown()" onblur="hideTeacherDropdown()">
+                        <div class="dropdown-list" id="batchTeacherDropdown">
+                            <div class="dropdown-item" data-value="" data-name="">选择老师</div>
+                        </div>
+                        <input type="hidden" id="batchTeacher" value="">
+                        <input type="hidden" id="batchTeacherName" value="">
+                    </div>
+                </div>
+                <div class="control-item">
+                    <label for="batchSite">教室</label>
+                    <select id="batchSite" onchange="updateBatchSiteInfo()">
+                        <option value="" data-name="">选择教室</option>
+                    </select>
+                    <input type="hidden" id="batchSiteName" value="">
+                </div>
+            </div>
+            <div class="control-group">
+                <div class="control-item">
                     <label for="batchMaxCount">最大人数</label>
                     <input type="number" id="batchMaxCount" value="9" min="1" max="20">
                 </div>
@@ -734,8 +839,7 @@
                     <input type="number" id="batchMinCount" value="3" min="1" max="20">
                 </div>
                 <div class="control-item">
-                    <label for="batchConsumption">消耗课时</label>
-                    <input type="number" id="batchConsumption" value="1" min="0.5" max="5" step="0.5">
+                    <!-- 空白占位，保持布局平衡 -->
                 </div>
             </div>
             <div style="margin-top: 15px;">
@@ -795,6 +899,122 @@
         const LOGIN_API = 'https://yuekeapi.xingxingzhihuo.com.cn/WebApi/Login.aspx';
         const STORES_ID = '1517';
         
+        // 简化的拼音库（基于pinyin-pro的核心算法）
+        const pinyinData = {
+            // 这里是一个简化版的拼音数据，包含常用汉字
+            // 实际使用中可以加载完整的拼音库
+            '一': 'yi', '二': 'er', '三': 'san', '四': 'si', '五': 'wu', '六': 'liu', '七': 'qi', '八': 'ba', '九': 'jiu', '十': 'shi',
+            '王': 'wang', '李': 'li', '张': 'zhang', '刘': 'liu', '陈': 'chen', '杨': 'yang', '赵': 'zhao', '黄': 'huang', '周': 'zhou', '吴': 'wu',
+            '徐': 'xu', '孙': 'sun', '胡': 'hu', '朱': 'zhu', '高': 'gao', '林': 'lin', '何': 'he', '郭': 'guo', '马': 'ma', '罗': 'luo',
+            '梁': 'liang', '宋': 'song', '郑': 'zheng', '谢': 'xie', '韩': 'han', '唐': 'tang', '冯': 'feng', '于': 'yu', '董': 'dong', '萧': 'xiao',
+            '程': 'cheng', '曹': 'cao', '袁': 'yuan', '邓': 'deng', '许': 'xu', '傅': 'fu', '沈': 'shen', '曾': 'zeng', '彭': 'peng', '吕': 'lv',
+            '苏': 'su', '卢': 'lu', '蒋': 'jiang', '蔡': 'cai', '贾': 'jia', '丁': 'ding', '魏': 'wei', '薛': 'xue', '叶': 'ye', '阎': 'yan',
+            '余': 'yu', '潘': 'pan', '杜': 'du', '戴': 'dai', '夏': 'xia', '钟': 'zhong', '汪': 'wang', '田': 'tian', '任': 'ren', '姜': 'jiang',
+            '范': 'fan', '方': 'fang', '石': 'shi', '姚': 'yao', '谭': 'tan', '廖': 'liao', '邹': 'zou', '熊': 'xiong', '金': 'jin', '陆': 'lu',
+            '郝': 'hao', '孔': 'kong', '白': 'bai', '崔': 'cui', '康': 'kang', '毛': 'mao', '邱': 'qiu', '秦': 'qin', '江': 'jiang', '史': 'shi',
+            '顾': 'gu', '侯': 'hou', '邵': 'shao', '孟': 'meng', '龙': 'long', '万': 'wan', '段': 'duan', '钱': 'qian', '汤': 'tang',
+            '彦': 'yan', '焱': 'yan', '軟': 'ruan', '开': 'kai', '發': 'fa', '爵': 'jue', '士': 'shi', '拉': 'la', '芭': 'ba', '蕾': 'lei',
+            '現': 'xian', '代': 'dai', '民': 'min', '族': 'zu', '古': 'gu', '典': 'dian', '街': 'jie', '舞': 'wu', '中': 'zhong', '国': 'guo',
+            '華': 'hua', '尔': 'er', '兹': 'zi', '伦': 'lun', '巴': 'ba', '恰': 'qia', '桑': 'sang', '探': 'tan', '戈': 'ge', '萨': 'sa',
+            '尚': 'shang', '牛': 'niu', '仔': 'zai', '比': 'bi', '亚': 'ya', '福': 'fu', '克': 'ke', '斯': 'si', '特': 'te', '罗': 'luo',
+            '德': 'de', '里': 'li', '格': 'ge', '维': 'wei', '加': 'jia', '基': 'ji', '础': 'chu', '入': 'ru', '门': 'men', '提': 'ti',
+            '进': 'jin', '阶': 'jie', '专': 'zhuan', '业': 'ye', '班': 'ban', '私': 'si', '教': 'jiao', '课': 'ke', '老': 'lao', '师': 'shi',
+            '学': 'xue', '员': 'yuan', '初': 'chu', '级': 'ji', '成': 'cheng', '人': 'ren', '少': 'shao', '儿': 'er', '青': 'qing', '年': 'nian',
+            '女': 'nv', '男': 'nan', '混': 'hun', '合': 'he', '单': 'dan', '双': 'shuang', '伟': 'wei', '芳': 'fang', '娜': 'na', '敏': 'min',
+            '静': 'jing', '丽': 'li', '强': 'qiang', '磊': 'lei', '军': 'jun', '洋': 'yang', '勇': 'yong', '艳': 'yan', '杰': 'jie', '娟': 'juan',
+            '涛': 'tao', '明': 'ming', '超': 'chao', '秀': 'xiu', '英': 'ying', '慧': 'hui', '巧': 'qiao', '美': 'mei', '颖': 'ying', '钰': 'yu',
+            '萍': 'ping', '红': 'hong', '婷': 'ting', '玲': 'ling', '雅': 'ya', '琳': 'lin', '素': 'su', '云': 'yun', '莲': 'lian', '真': 'zhen',
+            '环': 'huan', '雪': 'xue', '荣': 'rong', '爱': 'ai', '妹': 'mei', '霞': 'xia', '香': 'xiang', '月': 'yue', '莺': 'ying', '媛': 'yuan',
+            '瑞': 'rui', '凡': 'fan', '佳': 'jia', '嘉': 'jia', '琼': 'qiong', '勤': 'qin', '珍': 'zhen', '贞': 'zhen', '莉': 'li', '桂': 'gui',
+            '娣': 'di', '璧': 'bi', '璐': 'lu', '娅': 'ya', '琦': 'qi', '晶': 'jing', '妍': 'yan', '茜': 'qian', '秋': 'qiu', '珊': 'shan',
+            '莎': 'sha', '锦': 'jin', '黛': 'dai', '倩': 'qian', '婕': 'jie', '馨': 'xin', '瑶': 'yao', '怡': 'yi', '悦': 'yue', '嫣': 'yan',
+            '薇': 'wei', '菁': 'jing', '梦': 'meng', '岚': 'lan', '苑': 'yuan', '婉': 'wan', '晓': 'xiao', '欢': 'huan', '霄': 'xiao', '枫': 'feng',
+            '芸': 'yun', '菲': 'fei', '寒': 'han', '伊': 'yi', '宜': 'yi', '可': 'ke', '姬': 'ji', '舒': 'shu', '影': 'ying', '荔': 'li',
+            '枝': 'zhi', '思': 'si', '丹': 'dan', '萱': 'xuan', '紫': 'zi', '宁': 'ning', '蓓': 'bei', '纨': 'wan', '苒': 'ran', '燕': 'yan',
+            '韵': 'yun', '融': 'rong', '园': 'yuan', '艺': 'yi', '咏': 'yong', '卿': 'qing', '聪': 'cong', '澜': 'lan', '纯': 'chun', '毓': 'yu',
+            '悠': 'you', '昭': 'zhao', '冰': 'bing', '爽': 'shuang', '琬': 'wan', '茗': 'ming', '羽': 'yu', '希': 'xi', '欣': 'xin', '飘': 'piao',
+            '育': 'yu', '滢': 'ying', '馥': 'fu', '筠': 'yun', '柔': 'rou', '竹': 'zhu', '霭': 'ai', '凝': 'ning', '软': 'ruan', '发': 'fa'
+        };
+        
+        // 动态加载更完整的拼音库
+        async function loadPinyinLibrary() {
+            try {
+                console.log('正在加载拼音库...');
+                
+                // 使用CDN加载pinyin-pro库
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/pinyin-pro@3.19.6/dist/index.js';
+                script.onload = () => {
+                    console.log('拼音库加载成功！');
+                    window.pinyinLibLoaded = true;
+                };
+                script.onerror = () => {
+                    console.log('拼音库加载失败，使用内置拼音数据');
+                    window.pinyinLibLoaded = false;
+                };
+                document.head.appendChild(script);
+                
+                // 等待加载完成
+                await new Promise(resolve => {
+                    const checkLoaded = () => {
+                        if (window.pinyinLibLoaded !== undefined) {
+                            resolve();
+                        } else {
+                            setTimeout(checkLoaded, 100);
+                        }
+                    };
+                    checkLoaded();
+                });
+                
+            } catch (error) {
+                console.log('拼音库加载异常，使用内置数据:', error);
+                window.pinyinLibLoaded = false;
+            }
+        }
+        
+        // 智能拼音转换函数
+        function toPinyin(text) {
+            // 如果第三方库可用，优先使用
+            if (window.pinyinLibLoaded && window.pinyin) {
+                try {
+                    return window.pinyin(text, { toneType: 'none', type: 'array' }).join('');
+                } catch (error) {
+                    console.log('第三方拼音库调用失败，使用内置数据');
+                }
+            }
+            
+            // 使用内置拼音数据
+            return text.split('').map(char => {
+                return pinyinData[char] || char.toLowerCase();
+            }).join('');
+        }
+        
+        // 智能拼音首字母转换
+        function toPinyinInitials(text) {
+            // 如果第三方库可用，优先使用
+            if (window.pinyinLibLoaded && window.pinyin) {
+                try {
+                    return window.pinyin(text, { pattern: 'first', toneType: 'none' });
+                } catch (error) {
+                    console.log('第三方拼音库调用失败，使用内置数据');
+                }
+            }
+            
+            // 使用内置拼音数据
+            return text.split('').map(char => {
+                const pinyin = pinyinData[char];
+                return pinyin ? pinyin[0] : char.toLowerCase();
+            }).join('');
+        }
+        
+        // 动态生成拼音索引
+        let teacherPinyinIndex = new Map();
+        let coursePinyinIndex = new Map();
+        
+        // 用户学习索引（记录用户的搜索行为）
+        let teacherLearningIndex = new Map();
+        let courseLearningIndex = new Map();
+        
         // 价格策略配置
         const PRICE_STRATEGIES = {
             "60": [
@@ -835,8 +1055,201 @@
             ]
         };
         
+        // 从localStorage加载学习索引
+        function loadLearningIndex() {
+            try {
+                const teacherData = localStorage.getItem('teacherLearningIndex');
+                const courseData = localStorage.getItem('courseLearningIndex');
+                
+                if (teacherData) {
+                    teacherLearningIndex = new Map(JSON.parse(teacherData));
+                    console.log('加载老师学习索引:', teacherLearningIndex.size, '条记录');
+                }
+                
+                if (courseData) {
+                    courseLearningIndex = new Map(JSON.parse(courseData));
+                    console.log('加载课程学习索引:', courseLearningIndex.size, '条记录');
+                }
+            } catch (error) {
+                console.log('加载学习索引失败:', error);
+            }
+        }
+        
+        // 保存学习索引到localStorage
+        function saveLearningIndex() {
+            try {
+                localStorage.setItem('teacherLearningIndex', JSON.stringify([...teacherLearningIndex]));
+                localStorage.setItem('courseLearningIndex', JSON.stringify([...courseLearningIndex]));
+            } catch (error) {
+                console.log('保存学习索引失败:', error);
+            }
+        }
+        
+        // 添加学习记录
+        function addLearningRecord(query, selectedName, selectedId, type) {
+            if (!query || query.length < 2) return; // 忽略太短的查询
+            
+            const learningIndex = type === 'teacher' ? teacherLearningIndex : courseLearningIndex;
+            const queryLower = query.toLowerCase();
+            
+            if (!learningIndex.has(queryLower)) {
+                learningIndex.set(queryLower, []);
+            }
+            
+            const records = learningIndex.get(queryLower);
+            
+            // 检查是否已存在相同记录
+            const existingRecord = records.find(r => r.id === selectedId);
+            if (existingRecord) {
+                existingRecord.count++;
+                existingRecord.lastUsed = Date.now();
+            } else {
+                records.push({
+                    id: selectedId,
+                    name: selectedName,
+                    count: 1,
+                    lastUsed: Date.now()
+                });
+            }
+            
+            // 按使用频率和最近使用时间排序
+            records.sort((a, b) => {
+                const scoreA = a.count * 0.7 + (Date.now() - a.lastUsed) / (1000 * 60 * 60 * 24) * 0.3;
+                const scoreB = b.count * 0.7 + (Date.now() - b.lastUsed) / (1000 * 60 * 60 * 24) * 0.3;
+                return scoreB - scoreA;
+            });
+            
+            // 限制每个查询最多保存5条记录
+            if (records.length > 5) {
+                records.splice(5);
+            }
+            
+            saveLearningIndex();
+            console.log(`学习记录已添加: "${query}" -> "${selectedName}"`);
+        }
+        
+        // 使用学习索引进行匹配
+        function matchWithLearning(query, type) {
+            const learningIndex = type === 'teacher' ? teacherLearningIndex : courseLearningIndex;
+            const queryLower = query.toLowerCase();
+            
+            const matches = [];
+            
+            // 精确匹配
+            if (learningIndex.has(queryLower)) {
+                matches.push(...learningIndex.get(queryLower));
+            }
+            
+            // 前缀匹配
+            for (let [key, records] of learningIndex) {
+                if (key.startsWith(queryLower) && key !== queryLower) {
+                    matches.push(...records);
+                }
+            }
+            
+            // 包含匹配
+            for (let [key, records] of learningIndex) {
+                if (key.includes(queryLower) && !key.startsWith(queryLower)) {
+                    matches.push(...records);
+                }
+            }
+            
+            // 去重并按分数排序
+            const uniqueMatches = new Map();
+            matches.forEach(match => {
+                if (!uniqueMatches.has(match.id) || uniqueMatches.get(match.id).count < match.count) {
+                    uniqueMatches.set(match.id, match);
+                }
+            });
+            
+            return Array.from(uniqueMatches.values());
+        }
+        
+        // 生成搜索索引
+        function generateSearchIndex(items, type) {
+            const index = new Map();
+            
+            items.forEach(item => {
+                const name = type === 'teacher' ? item.Name : item.CourseName;
+                const id = item.ID;
+                
+                // 生成多种搜索关键词
+                const keywords = [
+                    name.toLowerCase(), // 原始名称
+                    toPinyin(name), // 全拼音
+                    toPinyinInitials(name), // 拼音首字母
+                ];
+                
+                // 添加部分匹配
+                for (let i = 1; i <= name.length; i++) {
+                    for (let j = 0; j <= name.length - i; j++) {
+                        const substr = name.substr(j, i);
+                        keywords.push(substr.toLowerCase());
+                        keywords.push(toPinyin(substr));
+                        keywords.push(toPinyinInitials(substr));
+                    }
+                }
+                
+                // 去重并存储
+                const uniqueKeywords = [...new Set(keywords)];
+                uniqueKeywords.forEach(keyword => {
+                    if (!index.has(keyword)) {
+                        index.set(keyword, []);
+                    }
+                    index.get(keyword).push({ id, name, item });
+                });
+            });
+            
+            return index;
+        }
+        
+        // 简化的模糊搜索匹配函数
+        function fuzzyMatch(text, query, searchIndex) {
+            if (!query) return true;
+            
+            const queryLower = query.toLowerCase();
+            const textLower = text.toLowerCase();
+            
+            // 1. 直接匹配（最高优先级）
+            if (textLower.includes(queryLower)) return true;
+            
+            // 2. 拼音匹配（使用智能拼音转换）
+            const textPinyin = toPinyin(text).toLowerCase();
+            const textInitials = toPinyinInitials(text).toLowerCase();
+            
+            // 全拼音匹配
+            if (textPinyin.includes(queryLower)) return true;
+            if (textPinyin.startsWith(queryLower)) return true;
+            
+            // 首字母匹配
+            if (textInitials.includes(queryLower)) return true;
+            if (textInitials.startsWith(queryLower)) return true;
+            
+            // 3. 使用搜索索引进行匹配（如果可用）
+            if (searchIndex) {
+                for (let [keyword, items] of searchIndex) {
+                    const belongsToText = items.some(item => item.name === text);
+                    if (belongsToText) {
+                        if (keyword.includes(queryLower) || keyword.startsWith(queryLower)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            
+            // 4. 部分匹配（对于复合词）
+            const words = text.split(/[\s\-_]/);
+            for (let word of words) {
+                if (word.toLowerCase().includes(queryLower)) return true;
+                if (toPinyin(word).toLowerCase().includes(queryLower)) return true;
+                if (toPinyinInitials(word).toLowerCase().includes(queryLower)) return true;
+            }
+            
+            return false;
+        }
+        
         // 初始化
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             // 设置默认日期为今天
             const today = new Date();
             document.getElementById('batchDate').value = today.toISOString().split('T')[0];
@@ -846,6 +1259,14 @@
             
             // 初始化登录表单
             initializeLogin();
+            
+            // 加载学习索引
+            loadLearningIndex();
+            
+            // 异步加载拼音库
+            loadPinyinLibrary().then(() => {
+                console.log('拼音库初始化完成');
+            });
         });
         
         // 初始化登录
@@ -1190,14 +1611,51 @@
                     courses = coursesData.data;
                     // 调试：输出课程数据结构
                     console.log('课程数据结构:', courses.length > 0 ? courses[0] : '无课程数据');
+                    // 初始化课程下拉框和搜索索引
+                    initializeCourseDropdown();
+                    coursePinyinIndex = generateSearchIndex(courses, 'course');
+                    console.log('课程搜索索引生成完成，包含', coursePinyinIndex.size, '个关键词');
+                    
+                    // 测试拼音转换效果
+                    if (courses.length > 0) {
+                        const testCourse = courses[0];
+                        console.log(`课程拼音测试: "${testCourse.CourseName}" -> 全拼音: "${toPinyin(testCourse.CourseName)}", 首字母: "${toPinyinInitials(testCourse.CourseName)}"`);
+                    }
                 }
                 
                 if (teachersData.orsuccess === "1") {
                     teachers = teachersData.data;
+                    // 初始化老师下拉框和搜索索引
+                    initializeTeacherDropdown();
+                    teacherPinyinIndex = generateSearchIndex(teachers, 'teacher');
+                    console.log('老师搜索索引生成完成，包含', teacherPinyinIndex.size, '个关键词');
+                    
+                    // 详细测试拼音转换效果，特别是生僻字
+                    console.log('=== 老师拼音转换测试 ===');
+                    teachers.slice(0, 5).forEach(teacher => {
+                        const fullPinyin = toPinyin(teacher.Name);
+                        const initials = toPinyinInitials(teacher.Name);
+                        console.log(`老师: "${teacher.Name}" -> 全拼音: "${fullPinyin}", 首字母: "${initials}"`);
+                        
+                        // 特别测试包含生僻字的老师
+                        if (teacher.Name.includes('彦') || teacher.Name.includes('焱')) {
+                            console.log(`🔥 生僻字测试: "${teacher.Name}" -> 全拼音: "${fullPinyin}", 首字母: "${initials}"`);
+                            console.log(`   搜索测试: "yanyan" 能否匹配 "${teacher.Name}":`, fullPinyin.includes('yanyan'));
+                            console.log(`   搜索测试: "yy" 能否匹配 "${teacher.Name}":`, initials.includes('yy'));
+                        }
+                    });
+                    
+                    // 测试第三方拼音库状态
+                    console.log('拼音库状态:', window.pinyinLibLoaded ? '第三方库已加载' : '使用内置数据');
+                    if (window.pinyinLibLoaded && window.pinyin) {
+                        console.log('第三方拼音库测试: "彦焱" ->', window.pinyin('彦焱', { toneType: 'none', type: 'array' }));
+                    }
                 }
                 
                 if (sitesData.orsuccess === "1") {
                     sites = sitesData.data;
+                    // 初始化教室下拉框
+                    initializeSiteDropdown();
                 }
                 
                 showNotification(`数据加载完成: ${courses.length}个课程, ${teachers.length}位老师, ${sites.length}个教室`);
@@ -1205,6 +1663,246 @@
             } catch (error) {
                 console.error('加载数据失败:', error);
                 showNotification('数据加载失败，请检查网络连接', 'error');
+            }
+        }
+        
+        // 课程搜索过滤（使用学习索引优化）
+        function filterCourses(query) {
+            const dropdown = document.getElementById('batchCourseDropdown');
+            const items = dropdown.querySelectorAll('.dropdown-item');
+            
+            // 获取学习匹配结果
+            const learningMatches = matchWithLearning(query, 'course');
+            const learningIds = new Set(learningMatches.map(m => m.id));
+            
+            // 分类显示项目
+            const matchedItems = [];
+            const learningItems = [];
+            const otherItems = [];
+            
+            items.forEach(item => {
+                const courseName = item.textContent;
+                const courseId = item.dataset.value;
+                
+                if (fuzzyMatch(courseName, query, coursePinyinIndex)) {
+                    if (learningIds.has(courseId)) {
+                        learningItems.push(item);
+                    } else {
+                        matchedItems.push(item);
+                    }
+                    item.classList.remove('hidden');
+                } else {
+                    otherItems.push(item);
+                    item.classList.add('hidden');
+                }
+            });
+            
+            // 重新排序：学习匹配 > 普通匹配 > 隐藏项目
+            const parent = dropdown;
+            
+            // 先添加学习匹配的项目（按学习权重排序）
+            learningItems.sort((a, b) => {
+                const aMatch = learningMatches.find(m => m.id === a.dataset.value);
+                const bMatch = learningMatches.find(m => m.id === b.dataset.value);
+                return (bMatch?.count || 0) - (aMatch?.count || 0);
+            });
+            
+            // 为学习匹配的项目添加特殊标识
+            learningItems.forEach(item => {
+                if (!item.classList.contains('learning-match')) {
+                    item.classList.add('learning-match');
+                    const originalText = item.textContent;
+                    if (!originalText.includes('🔥')) {
+                        item.innerHTML = `🔥 ${originalText}`;
+                    }
+                }
+            });
+            
+            // 移除其他项目的学习标识
+            matchedItems.concat(otherItems).forEach(item => {
+                if (item.classList.contains('learning-match')) {
+                    item.classList.remove('learning-match');
+                    item.innerHTML = item.textContent.replace('🔥 ', '');
+                }
+            });
+        }
+        
+        // 老师搜索过滤（使用学习索引优化）
+        function filterTeachers(query) {
+            const dropdown = document.getElementById('batchTeacherDropdown');
+            const items = dropdown.querySelectorAll('.dropdown-item');
+            
+            // 获取学习匹配结果
+            const learningMatches = matchWithLearning(query, 'teacher');
+            const learningIds = new Set(learningMatches.map(m => m.id));
+            
+            // 分类显示项目
+            const matchedItems = [];
+            const learningItems = [];
+            const otherItems = [];
+            
+            items.forEach(item => {
+                const teacherName = item.textContent;
+                const teacherId = item.dataset.value;
+                
+                if (fuzzyMatch(teacherName, query, teacherPinyinIndex)) {
+                    if (learningIds.has(teacherId)) {
+                        learningItems.push(item);
+                    } else {
+                        matchedItems.push(item);
+                    }
+                    item.classList.remove('hidden');
+                } else {
+                    otherItems.push(item);
+                    item.classList.add('hidden');
+                }
+            });
+            
+            // 重新排序：学习匹配 > 普通匹配 > 隐藏项目
+            const parent = dropdown;
+            
+            // 先添加学习匹配的项目（按学习权重排序）
+            learningItems.sort((a, b) => {
+                const aMatch = learningMatches.find(m => m.id === a.dataset.value);
+                const bMatch = learningMatches.find(m => m.id === b.dataset.value);
+                return (bMatch?.count || 0) - (aMatch?.count || 0);
+            });
+            
+            // 为学习匹配的项目添加特殊标识
+            learningItems.forEach(item => {
+                if (!item.classList.contains('learning-match')) {
+                    item.classList.add('learning-match');
+                    const originalText = item.textContent;
+                    if (!originalText.includes('🔥')) {
+                        item.innerHTML = `🔥 ${originalText}`;
+                    }
+                }
+            });
+            
+            // 移除其他项目的学习标识
+            matchedItems.concat(otherItems).forEach(item => {
+                if (item.classList.contains('learning-match')) {
+                    item.classList.remove('learning-match');
+                    item.innerHTML = item.textContent.replace('🔥 ', '');
+                }
+            });
+        }
+        
+        // 显示课程下拉框
+        function showCourseDropdown() {
+            document.getElementById('batchCourseDropdown').classList.add('show');
+        }
+        
+        // 隐藏课程下拉框
+        function hideCourseDropdown() {
+            setTimeout(() => {
+                document.getElementById('batchCourseDropdown').classList.remove('show');
+            }, 200);
+        }
+        
+        // 显示老师下拉框
+        function showTeacherDropdown() {
+            document.getElementById('batchTeacherDropdown').classList.add('show');
+        }
+        
+        // 隐藏老师下拉框
+        function hideTeacherDropdown() {
+            setTimeout(() => {
+                document.getElementById('batchTeacherDropdown').classList.remove('show');
+            }, 200);
+        }
+        
+        // 初始化课程下拉框
+        function initializeCourseDropdown() {
+            const dropdown = document.getElementById('batchCourseDropdown');
+            dropdown.innerHTML = '<div class="dropdown-item" data-value="" data-name="" data-difficulty="1">选择课程</div>';
+            
+            courses.forEach(course => {
+                const difficulty = course.difficulty || course.Difficulty || course.level || course.Level || course.star || course.Star || '1';
+                const item = document.createElement('div');
+                item.className = 'dropdown-item';
+                item.dataset.value = course.ID;
+                item.dataset.name = course.CourseName;
+                item.dataset.difficulty = difficulty;
+                item.textContent = course.CourseName;
+                item.onclick = () => selectCourse(course.ID, course.CourseName, difficulty);
+                dropdown.appendChild(item);
+            });
+        }
+        
+        // 初始化老师下拉框
+        function initializeTeacherDropdown() {
+            const dropdown = document.getElementById('batchTeacherDropdown');
+            dropdown.innerHTML = '<div class="dropdown-item" data-value="" data-name="">选择老师</div>';
+            
+            teachers.forEach(teacher => {
+                const item = document.createElement('div');
+                item.className = 'dropdown-item';
+                item.dataset.value = teacher.ID;
+                item.dataset.name = teacher.Name;
+                item.textContent = teacher.Name;
+                item.onclick = () => selectTeacher(teacher.ID, teacher.Name);
+                dropdown.appendChild(item);
+            });
+        }
+        
+        // 初始化教室下拉框
+        function initializeSiteDropdown() {
+            const siteSelect = document.getElementById('batchSite');
+            siteSelect.innerHTML = '<option value="" data-name="">选择教室</option>';
+            
+            sites.forEach(site => {
+                const option = document.createElement('option');
+                option.value = site.ID;
+                option.dataset.name = site.SiteName;
+                option.textContent = site.SiteName;
+                siteSelect.appendChild(option);
+            });
+        }
+        
+        // 选择课程（添加学习记录）
+        function selectCourse(courseId, courseName, difficulty) {
+            const searchInput = document.getElementById('batchCourseSearch');
+            const query = searchInput.value;
+            
+            searchInput.value = courseName;
+            document.getElementById('batchCourse').value = courseId;
+            document.getElementById('batchCourseName').value = courseName;
+            document.getElementById('batchCourseDifficulty').value = difficulty;
+            document.getElementById('batchCourseDropdown').classList.remove('show');
+            
+            // 添加学习记录
+            if (query && query !== courseName) {
+                addLearningRecord(query, courseName, courseId, 'course');
+            }
+        }
+        
+        // 选择老师（添加学习记录）
+        function selectTeacher(teacherId, teacherName) {
+            const searchInput = document.getElementById('batchTeacherSearch');
+            const query = searchInput.value;
+            
+            searchInput.value = teacherName;
+            document.getElementById('batchTeacher').value = teacherId;
+            document.getElementById('batchTeacherName').value = teacherName;
+            document.getElementById('batchTeacherDropdown').classList.remove('show');
+            
+            // 添加学习记录
+            if (query && query !== teacherName) {
+                addLearningRecord(query, teacherName, teacherId, 'teacher');
+            }
+        }
+        
+        // 更新教室信息
+        function updateBatchSiteInfo() {
+            const siteSelect = document.getElementById('batchSite');
+            const selectedOption = siteSelect.options[siteSelect.selectedIndex];
+            const siteName = selectedOption.dataset.name || '';
+            document.getElementById('batchSiteName').value = siteName;
+            
+            // 如果选择的是"2教"，自动设置最大人数为8
+            if (siteName && siteName.includes('2教')) {
+                document.getElementById('batchMaxCount').value = 8;
             }
         }
         
@@ -1229,7 +1927,29 @@
             const batchDuration = document.getElementById('batchDuration').value;
             const batchMaxCount = document.getElementById('batchMaxCount').value;
             const batchMinCount = document.getElementById('batchMinCount').value;
-            const batchConsumption = document.getElementById('batchConsumption').value;
+            
+            // 获取快速设置的课程、老师、教室信息
+            const batchCourseId = document.getElementById('batchCourse').value;
+            const batchCourseName = document.getElementById('batchCourseName').value;
+            const batchCourseDifficulty = document.getElementById('batchCourseDifficulty').value;
+            const batchTeacherId = document.getElementById('batchTeacher').value;
+            const batchTeacherName = document.getElementById('batchTeacherName').value;
+            const batchSiteId = document.getElementById('batchSite').value;
+            const batchSiteName = document.getElementById('batchSiteName').value;
+            
+            // 根据时长计算消耗课时
+            let consumption = 1;
+            switch(batchDuration) {
+                case '60':
+                    consumption = 1;
+                    break;
+                case '90':
+                    consumption = 1.5;
+                    break;
+                case '120':
+                    consumption = 2;
+                    break;
+            }
             
             const price = calculatePrice(batchDuration, batchMaxCount);
             
@@ -1244,23 +1964,29 @@
                     <select class="row-select course-select" onchange="updateCourseDifficulty(this)">
                         <option value="">选择课程</option>
                         ${courses.map(c => {
-                            // 尝试多个可能的难度字段名称
                             const difficulty = c.difficulty || c.Difficulty || c.level || c.Level || c.star || c.Star || '1';
-                            return `<option value="${c.ID}" data-name="${c.CourseName}" data-difficulty="${difficulty}">${c.CourseName}</option>`;
+                            const selected = c.ID === batchCourseId ? 'selected' : '';
+                            return `<option value="${c.ID}" data-name="${c.CourseName}" data-difficulty="${difficulty}" ${selected}>${c.CourseName}</option>`;
                         }).join('')}
                     </select>
                 </td>
-                <td><span class="difficulty-display">-</span></td>
+                <td><span class="difficulty-display">${batchCourseId ? '★'.repeat(parseInt(batchCourseDifficulty)) + '☆'.repeat(5 - parseInt(batchCourseDifficulty)) : '-'}</span></td>
                 <td>
                     <select class="row-select teacher-select">
                         <option value="">选择老师</option>
-                        ${teachers.map(t => `<option value="${t.ID}" data-name="${t.Name}">${t.Name}</option>`).join('')}
+                        ${teachers.map(t => {
+                            const selected = t.ID === batchTeacherId ? 'selected' : '';
+                            return `<option value="${t.ID}" data-name="${t.Name}" ${selected}>${t.Name}</option>`;
+                        }).join('')}
                     </select>
                 </td>
                 <td>
                     <select class="row-select site-select" onchange="handleSiteChange(this)">
                         <option value="">选择教室</option>
-                        ${sites.map(s => `<option value="${s.ID}" data-name="${s.SiteName}">${s.SiteName}</option>`).join('')}
+                        ${sites.map(s => {
+                            const selected = s.ID === batchSiteId ? 'selected' : '';
+                            return `<option value="${s.ID}" data-name="${s.SiteName}" ${selected}>${s.SiteName}</option>`;
+                        }).join('')}
                     </select>
                 </td>
                 <td>
@@ -1272,7 +1998,7 @@
                 </td>
                 <td><input type="number" class="row-input max-count" value="${batchMaxCount}" min="1" max="20" onchange="updatePrice(this)"></td>
                 <td><input type="number" class="row-input min-count" value="${batchMinCount}" min="1" max="20"></td>
-                <td><input type="number" class="row-input consumption" value="${batchConsumption}" min="0.5" max="5" step="0.5"></td>
+                <td><input type="number" class="row-input consumption" value="${consumption}" min="0.5" max="5" step="0.5"></td>
                 <td><span class="price">${price}</span></td>
                 <td><span class="status-indicator status-pending">待排课</span></td>
                 <td>
@@ -1341,7 +2067,6 @@
         // 更新快速设置中的消耗课时
         function updateBatchConsumption() {
             const duration = document.getElementById('batchDuration').value;
-            const consumptionInput = document.getElementById('batchConsumption');
             
             let consumption = 1; // 默认值
             switch(duration) {
@@ -1355,7 +2080,7 @@
                     consumption = 2;
                     break;
             }
-            consumptionInput.value = consumption;
+            // 消耗课时现在在添加行时自动计算，不需要在快速设置中显示
         }
         
         // 更新课程难度显示
@@ -1652,4 +2377,4 @@
         }, 5 * 60 * 1000); // 5分钟
     </script>
 </body>
-</html> 
+</html>
